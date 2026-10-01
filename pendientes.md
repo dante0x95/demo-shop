@@ -1,0 +1,52 @@
+# Pendientes: Medusa (tienda de ropa + delivery)
+
+## Módulos
+- [] brand (tutorial)
+- [ ] media: biblioteca de medios (media_asset)
+- [ ] metafield: definiciones de campos personalizados
+- [ ] package-preset: cajas/paquetes predefinidos
+- [ ] driver: repartidores (actor type propio)
+
+## Links
+- [] product ↔ brand (tutorial)
+- [ ] order ↔ driver
+
+## Workflows
+- [ ] create-product-full: producto + variantes + inventario por ubicación + marca
+- [ ] assign-driver: asignar repartidor a un pedido
+- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega
+
+## Endpoints Admin
+- [] GET/POST /admin/brands (verificar lo hecho en el tutorial)
+- [ ] GET/POST/DELETE /admin/brands/:id
+- [ ] POST /admin/products/full → workflow create-product-full
+- [ ] POST /admin/media (subir + registrar)
+- [ ] GET /admin/media (biblioteca, con paginación)
+- [ ] DELETE /admin/media/:id
+- [ ] GET/POST/DELETE /admin/metafield-definitions
+- [ ] GET/POST/DELETE /admin/package-presets
+- [ ] GET/POST /admin/drivers
+- [ ] POST /admin/orders/:id/assign-driver
+
+## Endpoints Driver (protegidos con authenticate("driver"))
+- [ ] POST /drivers (registro, junto con /auth/driver/emailpass/register)
+- [ ] GET /drivers/me
+- [ ] GET /drivers/me/orders
+- [ ] POST /drivers/me/orders/:id/delivered
+- [ ] POST /drivers/me/orders/:id/collect-payment
+
+## Endpoints Store (storefront + agente de WhatsApp)
+- [ ] GET /store/brands
+- [ ] GET /store/brands/:id/products
+
+## Middlewares
+- [x] additional_data.brand_id en creación de producto (tutorial)
+- [ ] authenticate("driver", ["session", "bearer"]) en /drivers/me/*
+
+## Pagos
+- [ ] Contra entrega: proveedor manual (system) habilitado en la región
+- [ ] (Opcional) Payment Provider propio si hay reglas por zona o recargo
+
+## Fuera del MVP
+- Colecciones automáticas, taxonomía con atributos, publicación programada,
+  redirecciones de handle, descripción con IA, bundles
