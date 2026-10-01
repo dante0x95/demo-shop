@@ -9,12 +9,23 @@ Status: [ ] todo · [~] in PR · [x] merged
 
 ## Phase 1 — Brand (calibration)
 
-### [ ] T01 · GET/POST /admin/brands
+### [~] T01 · GET/POST /admin/brands
 Deps: — · Ships: `brand` module (`brand`, Reusable), `create-brand` workflow, integration test setup
 - Nothing exists yet: build the module, workflow and routes from scratch. Once merged,
   this is the reference implementation the other modules mirror.
-- ❓ Brand fields beyond `name`.
+- Fields (decided): name, handle, description, logo_url, banner_url, is_active (default true),
+  metadata. Name unique case-insensitive and handle unique, duplicates → 400.
 - Tests: create → 200; missing name → 400; list paginated; no auth → 401.
+
+### [ ] T01.1 · Admin panel: Brands list + create
+Deps: T01 · Ships: admin JS SDK client (`src/admin/lib/sdk.ts`)
+- Temporary UI in Medusa's built-in admin (`/app`) until the custom admin phase; keep it minimal.
+- "Brands" sidebar entry → page with a paginated table (name, handle, is_active) from
+  `GET /admin/brands`, and a "Create brand" form calling `POST /admin/brands`.
+- Show the API's 400 messages on the form (missing name, duplicate name/handle, invalid URL).
+- Load the `building-admin-dashboard-customizations` skill first. No new endpoints.
+- Verify: `npm run build` passes; manual check in `/app`: list paginates, create works,
+  duplicate shows the error. (No admin UI test suite exists.)
 
 ### [ ] T02 · GET/POST/DELETE /admin/brands/:id
 Deps: T01 · Ships: `product ↔ brand` link

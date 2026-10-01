@@ -1,7 +1,7 @@
 # Pendientes: Medusa (tienda de ropa + delivery)
 
 ## Módulos
-- [ ] brand
+- [x] brand
 - [ ] media: biblioteca de medios (media_asset)
 - [ ] metafield: definiciones de campos personalizados
 - [ ] package-preset: cajas/paquetes predefinidos
@@ -17,7 +17,7 @@
 - [ ] confirm-delivery: marcar entregado + capturar pago contra entrega
 
 ## Endpoints Admin
-- [ ] GET/POST /admin/brands
+- [x] GET/POST /admin/brands
 - [ ] GET/POST/DELETE /admin/brands/:id
 - [ ] POST /admin/products/full → workflow create-product-full
 - [ ] POST /admin/media (subir + registrar)
@@ -27,6 +27,9 @@
 - [ ] GET/POST/DELETE /admin/package-presets
 - [ ] GET/POST /admin/drivers
 - [ ] POST /admin/orders/:id/assign-driver
+
+## Admin UI (panel de Medusa, temporal)
+- [ ] Marcas: listado + crear
 
 ## Endpoints Driver (protegidos con authenticate("driver"))
 - [ ] POST /drivers (registro, junto con /auth/driver/emailpass/register)
