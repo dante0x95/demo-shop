@@ -96,8 +96,25 @@ cd apps/backend
 <pm> exec medusa user -e admin@test.com -p supersecret
 <pm> run backend:seed                        # from root; seeds initial data
 ```
+## Medusa Skills & Documentation
+
+Medusa provides agent skills containing framework-specific guidance. Use the Medusa development skills when they are available to the current agent.
+
+Relevant skills include:
+
+- `building-with-medusa` — backend modules, API routes, workflows, data models, and module links.
+- `building-admin-dashboard-customizations` — changes under `apps/backend/src/admin`.
+- `building-storefronts` — changes under `apps/storefront`.
+- Medusa database/migration skills when working with custom module schema changes.
+
+The `/plugin marketplace` and `/plugin install` commands are Claude Code-specific. Do not attempt to execute them from Codex.
+
+When running under Codex, use installed Codex-compatible skills if available. If Medusa skills are not installed, rely on the repository code, installed package types/documentation, and official Medusa documentation rather than guessing framework APIs.
+
+For PR review, Medusa skills are supporting documentation. They do not replace executing the repository's tests, lint, migrations checks, or inspecting the actual diff.
 
 ## Medusa Skills & MCP Server
+
 
 These are optional but strongly recommended — they give documentation-backed answers instead of guesses about Medusa APIs. **Use them when available; if they are not, mention to the user that installing them meaningfully improves development on this project.**
 
@@ -152,3 +169,243 @@ claude mcp add --transport http medusa https://docs.medusajs.com/mcp # or agent 
 - `.env` / `.env.local` — never commit, print, or copy secret values out of them. Edit `.env.template` instead when documenting a new variable.
 - Existing migrations in `src/modules/*/migrations/` — add a new migration rather than rewriting one that may already have run.
 - Don't run destructive DB commands (drops, `db:migrate --help`-style flags that reset state) against the user's database without explicit confirmation.
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->
+
+
+## PR Review and Merge Readiness
+
+When asked to review a PR, branch, or work produced by another agent, act as an independent reviewer.
+
+The implementation may have been produced by Claude or another coding agent. Do not assume its implementation, explanation, or tests are correct.
+
+Your priorities are, in order:
+
+1. Understand the task and expected behavior.
+2. Inspect the actual Git diff against the PR's base branch.
+3. Run the relevant tests.
+4. Review whether the tests adequately verify the change.
+5. Inspect the implementation for defects, regressions, security issues, data-integrity problems, and incorrect Medusa patterns.
+6. Determine whether the PR is ready to merge.
+
+### Review workflow
+
+Before reviewing code:
+
+- Determine the current branch.
+- Determine the PR/base branch. Use `main` only if that is actually the base.
+- Inspect `git status`.
+- Inspect the commits and diff between the base branch and current branch.
+- Read any task, issue, plan, or acceptance criteria referenced by the PR when available.
+- Identify the affected modules, workflows, routes, migrations, admin extensions, and tests.
+
+Useful commands include:
+
+```bash
+git status
+git branch --show-current
+git diff --stat <base>...HEAD
+git diff <base>...HEAD
+git log --oneline <base>..HEAD
+```
+
+Do not modify production code during the initial review unless explicitly asked.
+
+### Test-first review
+
+Testing is the first verification step after understanding the diff.
+
+Detect and use the package manager according to this file.
+
+Run the smallest relevant test suite first, followed by broader checks when appropriate.
+
+For backend changes, consider:
+
+1. targeted test file or test name
+2. unit tests
+3. module integration tests
+4. HTTP integration tests
+5. lint
+6. build/type checking
+7. broader repository tests when the change can affect other packages
+
+Do not claim that a test, lint command, build, or other verification passed unless you actually executed it successfully.
+
+If tests cannot run because of environment requirements such as PostgreSQL, report that clearly and lower confidence in the merge-readiness assessment.
+
+### Test quality
+
+Passing tests are not sufficient by themselves.
+
+Review whether tests cover the behavior introduced or changed by the PR.
+
+Depending on the feature, consider:
+
+- happy path
+- authentication
+- authorization
+- invalid input
+- missing required input
+- normalization
+- duplicate values
+- database constraints
+- concurrency where uniqueness or invariants matter
+- filtering
+- pagination
+- ordering
+- error responses
+- side effects
+- transactional behavior
+- workflow compensation / rollback behavior
+- regressions
+
+For API routes, verify relevant:
+
+- status codes
+- response shapes
+- request validation
+- query validation
+- authentication / authorization
+- persisted state
+
+### Medusa review
+
+For Medusa changes, pay particular attention to:
+
+- module registration
+- data models
+- generated migrations
+- module services
+- workflows
+- workflow steps
+- compensation functions
+- dependency injection
+- API route conventions
+- middleware registration
+- request and query validation
+- authentication
+- authorization
+- remote query / graph usage
+- module links
+- database constraints
+- pagination and filtering conventions
+
+Follow the Medusa version actually installed in this repository instead of assuming APIs from memory.
+
+Application-level uniqueness checks must not be assumed to provide database-level integrity. When a value must remain unique, inspect whether an appropriate database constraint/index also exists and consider concurrent requests.
+
+### Findings
+
+Only report concrete findings.
+
+Classify findings as:
+
+- BLOCKER — should be fixed before merge.
+- NON-BLOCKING — valid improvement or concern that does not need to prevent merge.
+- OUT OF SCOPE — existing or unrelated issue worth mentioning separately.
+
+Do not make stylistic preferences merge blockers.
+
+Do not require unrelated refactors.
+
+For each blocking finding include:
+
+- severity
+- file and location
+- problem
+- impact
+- how it was verified
+- suggested fix
+
+### Merge readiness
+
+End every PR review with:
+
+## Verification Performed
+
+List the commands and checks actually executed.
+
+## Findings
+
+List concrete findings, separating blockers from non-blocking observations.
+
+## Test Coverage
+
+Summarize:
+
+- relevant existing tests
+- tests added or changed by the PR
+- tests executed during review
+- important scenarios that remain unverified
+
+## Merge Readiness
+
+Use exactly one of:
+
+**READY TO MERGE**
+
+or
+
+**NOT READY TO MERGE**
+
+A PR is READY TO MERGE when:
+
+- relevant tests pass
+- required lint/build/type checks pass where applicable
+- acceptance criteria are implemented
+- important behavior has reasonable verification
+- no confirmed merge blocker remains
+- migrations/schema changes are safe
+- authentication and authorization are correct where relevant
+- no significant regression was identified
+
+A PR is NOT READY TO MERGE when a confirmed blocker remains, such as:
+
+- relevant tests failing because of the PR
+- incorrect functionality
+- missing required functionality
+- serious security issue
+- unsafe migration/schema change
+- data-integrity problem
+- broken authentication or authorization
+- required build/type/lint failure
+
+If the PR is NOT READY TO MERGE, list the exact blockers that must be resolved.
+
+## Confidence
+
+Report:
+
+- High
+- Medium
+- Low
+
+Briefly explain what was actually verified and what could not be verified.
+
+### GitHub PR comments
+
+When reviewing a GitHub PR from the local Codex CLI:
+
+- Use `gh` to inspect the PR when available.
+- If a concrete bug or merge blocker is confirmed, publish a comment on the PR.
+- Prefer an inline review comment on the relevant changed line using `gh api`.
+- If an inline comment is not practical, use `gh pr comment`.
+- Do not comment on speculative issues or style preferences.
+- Do not publish duplicate comments.
+
+Before posting comments, verify that `gh auth status` succeeds.
+
+Typical commands:
+
+```bash
+gh pr view <pr-number>
+gh pr diff <pr-number>
