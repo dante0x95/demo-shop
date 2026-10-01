@@ -2,6 +2,7 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { BRAND_MODULE } from "../../../modules/brand"
 import BrandModuleService from "../../../modules/brand/service"
+import { brandConflictError, findBrandConflict } from "../utils/brand-conflict"
 
 export type ValidateBrandUniqueStepInput = {
   name: string
@@ -10,9 +11,8 @@ export type ValidateBrandUniqueStepInput = {
   handle_source: string
 }
 
-// Escape LIKE wildcards so $ilike matches the name literally, ignoring case only.
-const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&")
-
+// Early, friendly check. The unique indexes on handle and lower(name) are what
+// actually enforce uniqueness when requests race; see createBrandStep.
 export const validateBrandUniqueStep = createStep(
   "validate-brand-unique",
   async (input: ValidateBrandUniqueStepInput, { container }) => {
@@ -27,26 +27,10 @@ export const validateBrandUniqueStep = createStep(
     const brandModuleService: BrandModuleService =
       container.resolve(BRAND_MODULE)
 
-    const existing = await brandModuleService.listBrands(
-      {
-        $or: [
-          { name: { $ilike: escapeLike(input.name) } },
-          { handle: input.handle },
-        ],
-      },
-      { select: ["id", "name", "handle"], take: 1 }
-    )
+    const conflict = await findBrandConflict(brandModuleService, input)
 
-    if (existing.length) {
-      // A same-name brand also has the same generated handle; report the name.
-      const field =
-        existing[0].name.toLowerCase() === input.name.toLowerCase()
-          ? "name"
-          : "handle"
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        `A brand with this ${field} already exists`
-      )
+    if (conflict) {
+      throw brandConflictError(conflict)
     }
 
     return new StepResponse(undefined)
