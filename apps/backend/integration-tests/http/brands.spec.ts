@@ -1,4 +1,6 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
+import { BRAND_MODULE } from "../../src/modules/brand"
+import BrandModuleService from "../../src/modules/brand/service"
 import { createAdminUser } from "../helpers/admin-auth"
 
 jest.setTimeout(60 * 1000)
@@ -139,6 +141,87 @@ medusaIntegrationTestRunner({
           .catch((e) => e.response)
 
         expect(res.status).toBe(401)
+      })
+    })
+
+    describe("concurrent POST /admin/brands", () => {
+      it("enforces case-insensitive name uniqueness in the database", async () => {
+        const brandModuleService: BrandModuleService =
+          getContainer().resolve(BRAND_MODULE)
+
+        await brandModuleService.createBrands({
+          name: "Race Brand",
+          handle: "race-one",
+        })
+
+        await expect(
+          brandModuleService.createBrands({
+            name: "RACE BRAND",
+            handle: "race-two",
+          })
+        ).rejects.toThrow()
+      })
+
+      it("rejects the second of two racing creates with the duplicate-name 400", async () => {
+        const brandModuleService: BrandModuleService =
+          getContainer().resolve(BRAND_MODULE)
+        const listBrands = brandModuleService.listBrands.bind(brandModuleService)
+
+        // Hold both uniqueness checks until each has read the (empty) table,
+        // so both requests reach the insert.
+        let arrived = 0
+        let releaseChecks!: () => void
+        const bothChecked = new Promise<void>((resolve) => {
+          releaseChecks = resolve
+        })
+        const listSpy = jest
+          .spyOn(brandModuleService, "listBrands")
+          .mockImplementation(async (...args) => {
+            if (arrived >= 2) {
+              return listBrands(...args)
+            }
+            arrived++
+            const result = await listBrands(...args)
+            if (arrived === 2) {
+              releaseChecks()
+            }
+            await bothChecked
+            return result
+          })
+
+        try {
+          const responses = await Promise.all([
+            api
+              .post(
+                "/admin/brands",
+                { name: "Race Brand", handle: "race-one" },
+                adminHeaders
+              )
+              .catch((e) => e.response),
+            api
+              .post(
+                "/admin/brands",
+                { name: "RACE BRAND", handle: "race-two" },
+                adminHeaders
+              )
+              .catch((e) => e.response),
+          ])
+
+          // Both early checks saw an empty table, so the 400 comes from the
+          // unique index rejecting the second insert.
+          expect(arrived).toBe(2)
+          expect(responses.map((r) => r.status).sort()).toEqual([200, 400])
+          expect(responses.find((r) => r.status === 400).data.message).toBe(
+            "A brand with this name already exists"
+          )
+        } finally {
+          listSpy.mockRestore()
+        }
+
+        const [, count] = await brandModuleService.listAndCountBrands({
+          name: { $ilike: "race brand" },
+        })
+        expect(count).toBe(1)
       })
     })
 
