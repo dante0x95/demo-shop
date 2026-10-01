@@ -1,4 +1,5 @@
 import { APIRequestContext, expect, Page, test } from "@playwright/test"
+import { toHandle } from "@medusajs/framework/utils"
 
 const uniqueName = (label: string) =>
   `${label} ${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
@@ -46,14 +47,25 @@ test.describe("Admin brands page", () => {
     await expect(page.getByRole("row").filter({ hasText: name })).toBeVisible()
   })
 
-  test("creates a brand and shows it first in the list", async ({ page }) => {
+  test("creates a brand that is persisted and shown first in the list", async ({
+    page,
+  }) => {
     const name = uniqueName("Created")
+    const description = "Made by E2E"
+    const logoUrl = "https://example.com/logo.png"
     const modal = await openCreateModal(page)
 
     await modal.getByLabel("Name", { exact: true }).fill(name)
-    await modal.getByLabel("Description (optional)").fill("Made by E2E")
-    await modal.getByLabel("Logo URL (optional)").fill("https://example.com/logo.png")
+    await modal.getByLabel("Description (optional)").fill(description)
+    await modal.getByLabel("Logo URL (optional)").fill(logoUrl)
+
+    const createResponse = page.waitForResponse(
+      (res) =>
+        res.url().endsWith("/admin/brands") &&
+        res.request().method() === "POST"
+    )
     await modal.getByRole("button", { name: "Save" }).click()
+    const created = (await (await createResponse).json()).brand
 
     await expect(page.getByText(`Brand "${name}" created`)).toBeVisible()
     await expect(modal).toBeHidden()
@@ -61,6 +73,30 @@ test.describe("Admin brands page", () => {
     const firstRow = page.getByRole("row").nth(1)
     await expect(firstRow).toContainText(name)
     await expect(firstRow).toContainText("Active")
+
+    // Survives a full reload, so the row comes from the server, not page state.
+    await page.reload()
+    await expect(page.getByRole("row").filter({ hasText: name })).toBeVisible()
+
+    // The API returns the brand with every field the form sent.
+    const listResponse = await page.request.get("/admin/brands", {
+      params: { order: "-created_at", limit: 20 },
+    })
+    expect(listResponse.status()).toBe(200)
+    const { brands } = await listResponse.json()
+    const persisted = brands.find(
+      (brand: { id: string }) => brand.id === created.id
+    )
+
+    expect(persisted).toMatchObject({
+      id: created.id,
+      name,
+      handle: toHandle(name),
+      description,
+      logo_url: logoUrl,
+      banner_url: null,
+      is_active: true,
+    })
   })
 
   test("creates an inactive brand with an explicit handle", async ({ page }) => {
