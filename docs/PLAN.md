@@ -8,13 +8,15 @@ Status: [ ] todo · [~] in PR · [x] merged
 
 ## Phase 1 — Brand (calibration)
 
-### [ ] T01 · Verify GET/POST /admin/brands
-Deps: — · Ships: integration test setup
-- No new features. Add HTTP tests for the existing routes; fix only real bugs (list them in the PR).
+### [ ] T01 · GET/POST /admin/brands
+Deps: — · Ships: `brand` module (`brand`), `create-brand` workflow, integration test setup
+- Nothing exists yet: build the module, workflow and routes from scratch. Once merged,
+  this is the reference implementation the other modules mirror.
+- ❓ Brand fields beyond `name`.
 - Tests: create → 200; missing name → 400; list paginated; no auth → 401.
 
 ### [ ] T02 · GET/POST/DELETE /admin/brands/:id
-Deps: T01
+Deps: T01 · Ships: `product ↔ brand` link
 - GET returns the brand with linked products. POST is a partial update.
 - DELETE via workflow: unlinks products, never deletes them.
 - Unknown id → 404 on all three.
@@ -50,11 +52,12 @@ Deps: T05
 ## Phase 3 — Shopify-style product creation
 
 ### [ ] T08 · POST /admin/products/full
-Deps: T02, T05 · Ships: `create-product-full` workflow
+Deps: T02, T05 · Ships: `create-product-full` workflow, `productsCreated` brand hook
 - One request: product + options (color/size) + variants with prices + stock per location
   + brand + images (by `media_asset` id).
 - Compose core flows (`createProductsWorkflow`, inventory level flows).
-- Brand goes through `additional_data.brand_id` so the existing hook links it. Don't link twice.
+- Brand goes through `additional_data.brand_id`, linked by a `productsCreated` hook (validated
+  with `additionalDataValidator`). Don't link twice.
 - All-or-nothing. Tests: happy path; unknown brand → 400; unknown location → 400 AND no product left behind.
 
 ## Phase 4 — Catalog config

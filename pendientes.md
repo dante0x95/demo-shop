@@ -1,14 +1,14 @@
 # Pendientes: Medusa (tienda de ropa + delivery)
 
 ## Módulos
-- [] brand (tutorial)
+- [ ] brand
 - [ ] media: biblioteca de medios (media_asset)
 - [ ] metafield: definiciones de campos personalizados
 - [ ] package-preset: cajas/paquetes predefinidos
 - [ ] driver: repartidores (actor type propio)
 
 ## Links
-- [] product ↔ brand (tutorial)
+- [ ] product ↔ brand
 - [ ] order ↔ driver
 
 ## Workflows
@@ -17,7 +17,7 @@
 - [ ] confirm-delivery: marcar entregado + capturar pago contra entrega
 
 ## Endpoints Admin
-- [] GET/POST /admin/brands (verificar lo hecho en el tutorial)
+- [ ] GET/POST /admin/brands
 - [ ] GET/POST/DELETE /admin/brands/:id
 - [ ] POST /admin/products/full → workflow create-product-full
 - [ ] POST /admin/media (subir + registrar)
@@ -40,7 +40,7 @@
 - [ ] GET /store/brands/:id/products
 
 ## Middlewares
-- [x] additional_data.brand_id en creación de producto (tutorial)
+- [ ] additional_data.brand_id en creación de producto
 - [ ] authenticate("driver", ["session", "bearer"]) en /drivers/me/*
 
 ## Pagos
