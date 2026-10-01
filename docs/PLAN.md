@@ -2,14 +2,15 @@
 
 One task = one pendientes.md line = one PR. Do them in order; start a task only when its
 deps are merged. Prerequisites (module, link, workflow, middleware) ship inside the first
-task that needs them. ❓ = decide with Dante at the plan gate.
+task that needs them. ❓ = decide with Dante at the plan gate. Reusable = module will be extracted into a plugin
+(see `.claude/rules/medusa-architecture.md`).
 
 Status: [ ] todo · [~] in PR · [x] merged
 
 ## Phase 1 — Brand (calibration)
 
 ### [ ] T01 · GET/POST /admin/brands
-Deps: — · Ships: `brand` module (`brand`), `create-brand` workflow, integration test setup
+Deps: — · Ships: `brand` module (`brand`, Reusable), `create-brand` workflow, integration test setup
 - Nothing exists yet: build the module, workflow and routes from scratch. Once merged,
   this is the reference implementation the other modules mirror.
 - ❓ Brand fields beyond `name`.
@@ -33,7 +34,7 @@ Deps: T03
 ## Phase 2 — Media library
 
 ### [ ] T05 · POST /admin/media
-Deps: T01 · Ships: `media` module (`media_asset`), multer middleware
+Deps: T01 · Ships: `media` module (`media_asset`, Reusable), multer middleware
 - Upload with core `uploadFilesWorkflow`, then create `media_asset` rows
   (url, file_id, mime_type, size, alt).
 - If row creation fails, compensation deletes the uploaded files.
@@ -63,12 +64,12 @@ Deps: T02, T05 · Ships: `create-product-full` workflow, `productsCreated` brand
 ## Phase 4 — Catalog config
 
 ### [ ] T09 · GET/POST/DELETE /admin/metafield-definitions
-Deps: T01 · Ships: `metafield` module
+Deps: T01 · Ships: `metafield` module (Reusable)
 - key (unique per owner type), label, type (text/number/boolean/select), options, owner type.
 - ❓ Where values live: product `metadata` or own table.
 
 ### [ ] T10 · GET/POST/DELETE /admin/package-presets
-Deps: T01 · Ships: `package-preset` module
+Deps: T01 · Ships: `package-preset` module (Reusable)
 - name, length, width, height, weight, units, is_default (only one default).
 
 ## Phase 5 — Drivers & delivery
@@ -114,3 +115,15 @@ Deps: T16 · Ships: `confirm-delivery` (part 1)
 Deps: T11, T17
 - Captures the manual payment (core `capturePaymentWorkflow`). Only after delivered.
 - Double capture → 409.
+
+## Phase 6 — Reuse
+
+### [ ] T19 · Extract reusable modules into plugin(s)
+Deps: T04, T07, T09, T10
+- Move every Reusable module (brand, media, metafield, package-preset) with its links,
+  workflows, routes and admin UI into `packages/`, built with `medusa plugin:build`.
+- This shop consumes the plugin(s) via `plugins` in `medusa-config.ts`; shop workflows
+  (`create-product-full`) stay in the app.
+- Existing tables and migrations must carry over: no duplicate tables, no data loss.
+- ❓ One plugin per module or one shared plugin. ❓ Publish target (npm private / GitHub Packages).
+- Tests: all existing HTTP suites pass unchanged against the plugin-backed app.

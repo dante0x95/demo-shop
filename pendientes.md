@@ -47,6 +47,9 @@
 - [ ] Contra entrega: proveedor manual (system) habilitado en la región
 - [ ] (Opcional) Payment Provider propio si hay reglas por zona o recargo
 
+## Reutilización
+- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s)
+
 ## Fuera del MVP
 - Colecciones automáticas, taxonomía con atributos, publicación programada,
   redirecciones de handle, descripción con IA, bundles
