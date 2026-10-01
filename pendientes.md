@@ -29,7 +29,7 @@
 - [ ] POST /admin/orders/:id/assign-driver
 
 ## Admin UI (panel de Medusa, temporal)
-- [ ] Marcas: listado + crear
+- [x] Marcas: listado + crear
 
 ## Endpoints Driver (protegidos con authenticate("driver"))
 - [ ] POST /drivers (registro, junto con /auth/driver/emailpass/register)
