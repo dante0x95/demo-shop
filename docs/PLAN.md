@@ -9,7 +9,7 @@ Status: [ ] todo · [~] in PR · [x] merged
 
 ## Phase 1 — Brand (calibration)
 
-### [~] T01 · GET/POST /admin/brands
+### [x] T01 · GET/POST /admin/brands
 Deps: — · Ships: `brand` module (`brand`, Reusable), `create-brand` workflow, integration test setup
 - Nothing exists yet: build the module, workflow and routes from scratch. Once merged,
   this is the reference implementation the other modules mirror.
@@ -17,7 +17,7 @@ Deps: — · Ships: `brand` module (`brand`, Reusable), `create-brand` workflow,
   metadata. Name unique case-insensitive and handle unique, duplicates → 400.
 - Tests: create → 200; missing name → 400; list paginated; no auth → 401.
 
-### [ ] T01.1 · Admin panel: Brands list + create
+### [~] T01.1 · Admin panel: Brands list + create
 Deps: T01 · Ships: admin JS SDK client (`src/admin/lib/sdk.ts`)
 - Temporary UI in Medusa's built-in admin (`/app`) until the custom admin phase; keep it minimal.
 - "Brands" sidebar entry → page with a paginated table (name, handle, is_active) from

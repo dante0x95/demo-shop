@@ -18,7 +18,13 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* Admin UI packages hoist @types/react 19; pin to the backend's React 18 types */
+    "paths": {
+      "react": ["../../node_modules/@types/react"],
+      "react/*": ["../../node_modules/@types/react/*"]
+    }
   },
   "include": [
     ".",

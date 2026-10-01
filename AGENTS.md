@@ -78,7 +78,13 @@ cd apps/storefront && <pm> run lint    # next lint
 cd apps/backend && <pm> run test:unit                      # **/src/**/__tests__/**/*.unit.spec.ts
 cd apps/backend && <pm> run test:integration:modules       # **/src/modules/*/__tests__/**
 cd apps/backend && <pm> run test:integration:http          # **/integration-tests/http/*.spec.ts
+cd apps/backend && <pm> run test:e2e                       # Playwright, admin UI (e2e/**/*.spec.ts)
 ```
+
+E2E notes: run `npx playwright install chromium` once. Each run drops and recreates a dedicated
+`medusa_e2e` database (same server as `DATABASE_URL`, never the dev database), creates an admin
+user and starts `medusa develop` on port 9001. Artifacts (traces, report) go to
+`apps/backend/.playwright/`, a dot directory so the dev server's file watcher ignores it.
 
 Single test — pass a path/pattern through to Jest, keeping `TEST_TYPE`:
 
