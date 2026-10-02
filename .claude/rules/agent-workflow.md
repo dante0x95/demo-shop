@@ -22,19 +22,28 @@ Never skip tests, use `.only`, or weaken an assertion to make it pass.
 - Branch from up-to-date `main`: `feat/<task-id>-<slug>` (e.g. `feat/T05-media-upload`).
 - Small conventional commits: `feat(media): add media_asset model`.
 - Never push to `main`, merge, force-push, or rewrite history.
-- In the same PR: tick the item in `pendientes.md` and set the task to `[~]` in `docs/PLAN.md`.
-- Open the PR with `gh pr create` using the template below, then STOP.
+- Task PRs never edit `pendientes.md`, nor status in `docs/PLAN.md` (`[ ]`/`[x]` headings,
+  "Free right now"). Dante reconciles both by hand after merges. A task may only add its
+  plan-gate decisions (`Decided:` bullets) inside its own section of `docs/PLAN.md`.
+- Before opening the PR: `git merge origin/main`, then re-run the Definition of Done.
+- Open the PR with `gh pr create --reviewer @copilot` using the template below and check that
+  Copilot is listed as a requested reviewer (else `gh pr edit <n> --add-reviewer @copilot`).
+  Append `· PR #<n>` to your line in the board (`trabajo.md`), then STOP.
 - Review feedback = new commits on the same branch.
 
 ## Parallel sessions (2-3 agents at once)
 - One git worktree per session; never two sessions in the same checkout. Start each session
   with `claude --worktree <name>` and run `/next-task`.
-- `/next-task` picks and claims the task: any `[ ]` task whose `Deps:` are all `[x]` on
-  `origin/main` and that has no claim (`refs/claims/<task-id>`), branch or open PR. Never start
-  a task by hand without that check, and never start one whose deps are not merged.
-- Shared files are listed in `docs/PLAN.md` → "Parallel work". In them (`middlewares.ts`,
-  `medusa-config.ts`, imports) insert new entries in their sorted/grouped position, not always
-  at the end, so parallel PRs touch different lines.
+- Board: `trabajo.md` in the main checkout (first path of `git worktree list`), git-ignored,
+  one copy shared by all sessions. It lists the tasks in progress and the merged ones Dante has
+  not reconciled yet. Read it before taking a task; edit only your own line.
+- `/next-task` picks and claims the task: any task whose `Deps:` are all done (`[x]` on the board
+  or on `origin/main`) and that has no board line, claim (`refs/claims/<task-id>`), branch or
+  open PR. Never start a task by hand without that check, and never start one whose deps are
+  not merged.
+- Route groups are pre-registered in `src/api/middlewares.ts`: a task adds its routes to its own
+  `src/api/**/middlewares.ts` and doesn't touch the root file. If a task needs a new group, or
+  another shared file (`medusa-config.ts`, imports), insert the entry in its sorted position.
 - Conflict with `main`: `git merge origin/main` into the task branch, keep both sides, re-run
   the Definition of Done, push a normal commit. Never rebase or force-push.
 - Integration tests are safe in parallel (each suite creates its own database and port).
