@@ -8,7 +8,7 @@
 - [ ] driver: repartidores (actor type propio)
 
 ## Links
-- [ ] product ↔ brand
+- [x] product ↔ brand
 - [ ] order ↔ driver
 
 ## Workflows
@@ -18,7 +18,7 @@
 
 ## Endpoints Admin
 - [x] GET/POST /admin/brands
-- [ ] GET/POST/DELETE /admin/brands/:id
+- [x] GET/POST/DELETE /admin/brands/:id
 - [ ] POST /admin/products/full → workflow create-product-full
 - [ ] POST /admin/media (subir + registrar)
 - [ ] GET /admin/media (biblioteca, con paginación)

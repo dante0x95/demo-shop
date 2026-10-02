@@ -5,12 +5,14 @@ import {
 } from "@medusajs/framework/http"
 import {
   listBrandsTransformQueryConfig,
+  retrieveBrandDetailTransformQueryConfig,
   retrieveBrandTransformQueryConfig,
 } from "./query-config"
 import {
   AdminCreateBrand,
   AdminGetBrandParams,
   AdminGetBrandsParams,
+  AdminUpdateBrand,
 } from "./validators"
 
 export const adminBrandRoutesMiddlewares: MiddlewareRoute[] = [
@@ -32,6 +34,27 @@ export const adminBrandRoutesMiddlewares: MiddlewareRoute[] = [
       validateAndTransformQuery(
         AdminGetBrandParams,
         retrieveBrandTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    method: ["GET"],
+    matcher: "/admin/brands/:id",
+    middlewares: [
+      validateAndTransformQuery(
+        AdminGetBrandParams,
+        retrieveBrandDetailTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    method: ["POST"],
+    matcher: "/admin/brands/:id",
+    middlewares: [
+      validateAndTransformBody(AdminUpdateBrand),
+      validateAndTransformQuery(
+        AdminGetBrandParams,
+        retrieveBrandDetailTransformQueryConfig
       ),
     ],
   },
