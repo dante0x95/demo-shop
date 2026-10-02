@@ -22,7 +22,7 @@
 - [ ] POST /admin/products/full → workflow create-product-full
 - [x] POST /admin/media (subir + registrar)
 - [x] GET /admin/media (biblioteca, con paginación)
-- [ ] DELETE /admin/media/:id
+- [x] DELETE /admin/media/:id
 - [ ] GET/POST/DELETE /admin/metafield-definitions
 - [ ] GET/POST/DELETE /admin/package-presets
 - [ ] GET/POST /admin/drivers

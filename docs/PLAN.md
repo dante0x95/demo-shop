@@ -75,10 +75,11 @@ Deps: T01 · Ships: `media` module (`media_asset`, Reusable), multer middleware
 Deps: T05
 - Paginated, newest first, filters: `q` (alt/filename), `mime_type`.
 
-### [ ] T07 · DELETE /admin/media/:id
+### [x] T07 · DELETE /admin/media/:id
 Deps: T05
 - Delete the record first, the file last (file deletion can't be compensated).
-- ❓ Asset in use by a product: block (409) or allow?
+- Decided: an asset in use by a product is blocked with 409. "In use" = a non-deleted product
+  image with the asset's url (product images copy the url; no product ↔ media link yet).
 
 ### [ ] T07.1 · Direct-to-storage uploads (presigned URLs)
 Deps: T05, custom admin phase (changes how the frontend uploads)
