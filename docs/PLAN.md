@@ -17,7 +17,7 @@ Deps: — · Ships: `brand` module (`brand`, Reusable), `create-brand` workflow,
   metadata. Name unique case-insensitive and handle unique, duplicates → 400.
 - Tests: create → 200; missing name → 400; list paginated; no auth → 401.
 
-### [~] T01.1 · Admin panel: Brands list + create
+### [x] T01.1 · Admin panel: Brands list + create
 Deps: T01 · Ships: admin JS SDK client (`src/admin/lib/sdk.ts`)
 - Temporary UI in Medusa's built-in admin (`/app`) until the custom admin phase; keep it minimal.
 - "Brands" sidebar entry → page with a paginated table (name, handle, is_active) from
@@ -27,7 +27,7 @@ Deps: T01 · Ships: admin JS SDK client (`src/admin/lib/sdk.ts`)
 - Verify: `npm run build` passes; manual check in `/app`: list paginates, create works,
   duplicate shows the error. (No admin UI test suite exists.)
 
-### [ ] T02 · GET/POST/DELETE /admin/brands/:id
+### [~] T02 · GET/POST/DELETE /admin/brands/:id
 Deps: T01 · Ships: `product ↔ brand` link
 - GET returns the brand with linked products. POST is a partial update.
 - DELETE via workflow: unlinks products, never deletes them.
