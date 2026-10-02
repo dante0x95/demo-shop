@@ -43,7 +43,7 @@ Deps: T03
 - Variants with calculated prices for a `region_id` query param (the WhatsApp agent needs prices).
 - Decided: `region_id` is required (missing/unknown → 400); inactive or deleted brand → 404.
 
-### [ ] T04.1 · Admin panel: Brand detail (edit, delete, linked products)
+### [x] T04.1 · Admin panel: Brand detail (edit, delete, linked products)
 Deps: T02, T04 · Ships: `src/admin/routes/brands/[id]/page.tsx`
 - Clicking a row in the Brands table opens a detail page (`GET /admin/brands/:id`) showing the
   brand fields and its linked products.
