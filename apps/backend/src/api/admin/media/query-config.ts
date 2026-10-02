@@ -15,3 +15,9 @@ export const retrieveMediaAssetTransformQueryConfig = {
   defaults: defaultAdminMediaAssetFields,
   isList: false,
 }
+
+export const listMediaAssetsTransformQueryConfig = {
+  ...retrieveMediaAssetTransformQueryConfig,
+  defaultLimit: 20,
+  isList: true,
+}
