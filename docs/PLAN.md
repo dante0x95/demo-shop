@@ -63,8 +63,10 @@ Deps: T01 · Ships: `media` module (`media_asset`, Reusable), multer middleware
 - Upload with core `uploadFilesWorkflow`, then create `media_asset` rows
   (url, file_id, mime_type, size, alt).
 - If row creation fails, compensation deletes the uploaded files.
-- Decided: images only (jpeg, png, webp, gif, avif; no SVG), max 5 MB per file, both
-  overridable via `media` module options. `alt` is optional, sent per file by index.
+- Decided: images only (jpeg, png, webp, gif, avif; no SVG), max 5 MB per file, max 10 files
+  per request; all overridable via `media` module options, which `medusa-config.ts` fills from
+  `MEDIA_MAX_FILE_SIZE`, `MEDIA_MAX_FILES`, `MEDIA_ALLOWED_MIME_TYPES`. Extension and file
+  signature must match the declared type. `alt` is optional, sent per file by index.
 - Tests: 2 images → 200; non-image → 400; no auth → 401.
 
 ### [ ] T06 · GET /admin/media
