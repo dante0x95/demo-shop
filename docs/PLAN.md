@@ -33,7 +33,7 @@ Deps: T01 · Ships: `product ↔ brand` link
 - DELETE via workflow: unlinks products, never deletes them.
 - Unknown id → 404 on all three.
 
-### [~] T03 · GET /store/brands
+### [x] T03 · GET /store/brands
 Deps: T02
 - Publishable key required; paginated; public fields only.
 
