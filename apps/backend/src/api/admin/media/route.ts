@@ -2,7 +2,10 @@ import {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import {
+  ContainerRegistrationKeys,
+  MedusaError,
+} from "@medusajs/framework/utils"
 import { uploadMediaWorkflow } from "../../../workflows/media/upload-media"
 import { AdminUploadMediaType } from "./validators"
 
@@ -12,6 +15,14 @@ export const POST = async (
 ) => {
   const files = (req.files ?? []) as Express.Multer.File[]
   const alts = [req.validatedBody.alt ?? []].flat()
+
+  // `alt` is matched to files by index, so an extra value has no file.
+  if (alts.length > files.length) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      `Received ${alts.length} alt values for ${files.length} files`
+    )
+  }
 
   const { result } = await uploadMediaWorkflow(req.scope).run({
     input: {
