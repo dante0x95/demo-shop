@@ -29,8 +29,8 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [ ] POST /admin/products/full → workflow create-product-full · T08 · libre
 - [x] POST /admin/media (subir + registrar)
 - [x] GET /admin/media (biblioteca, con paginación)
-- [ ] DELETE /admin/media/:id · T07 · libre si se permite borrar en uso; si se bloquea (409), tras T08
-- [x] GET/POST/DELETE /admin/metafield-definitions
+- [x] DELETE /admin/media/:id · T07
+- [x] GET/POST/DELETE /admin/metafield-definitions · T09
 - [ ] GET/POST/DELETE /admin/package-presets · T10 · libre
 - [ ] GET/POST /admin/drivers · T14 · libre
 - [ ] POST /admin/orders/:id/assign-driver · T15 · libre
