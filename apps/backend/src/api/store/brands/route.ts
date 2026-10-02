@@ -26,6 +26,7 @@ export const GET = async (
     entity: "brand",
     ...req.queryConfig,
     filters,
+    withDeleted: false,
   })
 
   res.json({
