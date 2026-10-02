@@ -13,7 +13,7 @@ Each session runs `/next-task` in its own worktree: it takes any `[ ]` task whos
 `[x]` on `origin/main` and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T08, T09, T10, T11, T13, T14, T15 (and T07 if its ❓ is answered "allow").
+Free right now: T08, T09, T10, T11, T13, T14, T15.
 Blocked outside this backlog: T07.1 (custom admin phase).
 T13 and T15 unblock the most work (T16-T18), so `/next-task` picks T13 first (plan order).
 
@@ -95,10 +95,14 @@ Deps: T01 · Ships: `media` module (`media_asset`, Reusable), multer middleware
 Deps: T05
 - Paginated, newest first, filters: `q` (alt/filename), `mime_type`.
 
-### [ ] T07 · DELETE /admin/media/:id
-Deps: T05, plus T08 if the ❓ below is answered "block" (T08 defines how products reference media)
+### [x] T07 · DELETE /admin/media/:id
+Deps: T05 (the "block" answer would have added T08; the in-use check by url below removes it)
 - Delete the record first, the file last (file deletion can't be compensated).
-- ❓ Asset in use by a product: block (409) or allow?
+- Decided: an asset in use by a product is blocked with 409. "In use" = the asset's url is a
+  non-deleted product's image, product thumbnail or variant thumbnail (all three copy the url;
+  no product ↔ media link yet).
+  Contract for T08: store images and thumbnails as those url fields, or, if T08 adds a
+  product ↔ media link, switch `validateMediaAssetNotInUseStep` to that link in the same PR.
 
 ### [ ] T07.1 · Direct-to-storage uploads (presigned URLs)
 Deps: T05, custom admin phase (changes how the frontend uploads)
@@ -120,6 +124,8 @@ Deps: T02, T05 · Ships: `create-product-full` workflow, `productsCreated` brand
 - Brand goes through `additional_data.brand_id`, linked by a `productsCreated` hook (validated
   with `additionalDataValidator`). Don't link twice.
 - All-or-nothing. Tests: happy path; unknown brand → 400; unknown location → 400 AND no product left behind.
+- Images keep T07's in-use check working: save images and thumbnails as the asset's url, or
+  switch `validateMediaAssetNotInUseStep` to a new product ↔ media link in this PR.
 
 ## Phase 4 — Catalog config
 
