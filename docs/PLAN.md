@@ -163,6 +163,9 @@ Deps: T01 · Ships: `driver` module, `driver` actor type
 Deps: T12
 - `authenticate("driver", ["session","bearer"])` on `/drivers/me*`.
 - Tests: driver token → 200; admin token → 401; no token → 401.
+- Decided: inactive drivers get 200 with `is_active` (the app shows "pending approval");
+  later `/drivers/me/*` tasks decide their own gating for inactive drivers.
+- Decided: a valid token whose driver no longer exists (soft-deleted) → 404.
 
 ### [ ] T14 · GET/POST /admin/drivers
 Deps: T12
