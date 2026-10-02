@@ -1,38 +1,15 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import { Modules } from "@medusajs/framework/utils"
 import { MEDIA_MODULE } from "../../src/modules/media"
-import MediaModuleService, {
+import MediaModuleService from "../../src/modules/media/service"
+import {
   DEFAULT_MAX_FILE_SIZE,
-} from "../../src/modules/media/service"
+  DEFAULT_MAX_FILES,
+} from "../../src/modules/media/utils/options"
 import { createAdminUser } from "../helpers/admin-auth"
+import { buildMediaForm as buildForm, imageContent } from "../helpers/media-form"
 
 jest.setTimeout(60 * 1000)
-
-type UploadFile = {
-  name: string
-  type: string
-  content?: Buffer
-}
-
-const buildForm = (files: UploadFile[], alts: string[] = []) => {
-  const form = new FormData()
-
-  for (const file of files) {
-    form.append(
-      "files",
-      new Blob([new Uint8Array(file.content ?? Buffer.from(`content of ${file.name}`))], {
-        type: file.type,
-      }),
-      file.name
-    )
-  }
-
-  for (const alt of alts) {
-    form.append("alt", alt)
-  }
-
-  return form
-}
 
 medusaIntegrationTestRunner({
   inApp: true,
@@ -77,7 +54,7 @@ medusaIntegrationTestRunner({
             file_id: expect.any(String),
             filename: "front.png",
             mime_type: "image/png",
-            size: Buffer.byteLength("content of front.png"),
+            size: imageContent("image/png").length,
             alt: "Front view",
           }),
           expect.objectContaining({
@@ -86,7 +63,7 @@ medusaIntegrationTestRunner({
             file_id: expect.any(String),
             filename: "back.jpg",
             mime_type: "image/jpeg",
-            size: Buffer.byteLength("content of back.jpg"),
+            size: imageContent("image/jpeg").length,
             alt: null,
           }),
         ])
@@ -141,6 +118,93 @@ medusaIntegrationTestRunner({
 
         expect(res.status).toBe(400)
         expect(res.data.message).toContain("maximum size")
+        expect(await countMediaAssets()).toBe(0)
+      })
+
+      it("returns 400 when the extension does not match the type", async () => {
+        const form = buildForm([
+          {
+            name: "evil.html",
+            type: "image/png",
+            content: imageContent("image/png"),
+          },
+        ])
+
+        const res = await api
+          .post("/admin/media", form, adminHeaders)
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(400)
+        expect(res.data.message).toContain("extension")
+        expect(await countMediaAssets()).toBe(0)
+      })
+
+      it("returns 400 when the content is not the declared image type", async () => {
+        const form = buildForm([
+          {
+            name: "fake.png",
+            type: "image/png",
+            content: Buffer.from("<script>alert(1)</script>"),
+          },
+        ])
+
+        const res = await api
+          .post("/admin/media", form, adminHeaders)
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(400)
+        expect(res.data.message).toContain("not a valid image/png image")
+        expect(await countMediaAssets()).toBe(0)
+      })
+
+      it("returns 400 when a file has the signature of another image type", async () => {
+        const form = buildForm([
+          {
+            name: "photo.png",
+            type: "image/png",
+            content: imageContent("image/jpeg"),
+          },
+        ])
+
+        const res = await api
+          .post("/admin/media", form, adminHeaders)
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(400)
+        expect(await countMediaAssets()).toBe(0)
+      })
+
+      it("accepts every supported image type", async () => {
+        const form = buildForm([
+          { name: "a.jpeg", type: "image/jpeg" },
+          { name: "b.PNG", type: "image/png" },
+          { name: "c.gif", type: "image/gif" },
+          { name: "d.webp", type: "image/webp" },
+          { name: "e.avif", type: "image/avif" },
+        ])
+
+        const res = await api.post("/admin/media", form, adminHeaders)
+
+        expect(res.status).toBe(200)
+        expect(res.data.media_assets).toHaveLength(5)
+      })
+
+      it("returns 400 when more files than the maximum are sent", async () => {
+        const form = buildForm(
+          Array.from({ length: DEFAULT_MAX_FILES + 1 }, (_, index) => ({
+            name: `photo-${index}.png`,
+            type: "image/png",
+          }))
+        )
+
+        const res = await api
+          .post("/admin/media", form, adminHeaders)
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(400)
+        expect(res.data.message).toContain(
+          `maximum is ${DEFAULT_MAX_FILES} per request`
+        )
         expect(await countMediaAssets()).toBe(0)
       })
 
