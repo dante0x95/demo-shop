@@ -13,9 +13,9 @@ Each session runs `/next-task` in its own worktree: it takes any `[ ]` task whos
 `[x]` on `origin/main` and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T08, T09, T10, T11, T12.
+Free right now: T08, T09, T10, T11, T13, T14, T15.
 Blocked outside this backlog: T07.1 (custom admin phase).
-T12 unblocks the most work (T13-T18), so `/next-task` picks it first.
+T13 and T15 unblock the most work (T16-T18), so `/next-task` picks T13 first (plan order).
 
 Files most PRs touch (expect small merge conflicts, see the rules file for how to resolve):
 
@@ -144,7 +144,7 @@ Deps: —
 - Idempotent script in `src/scripts` enabling `pp_system_default` in the store region.
 - Test: running it twice doesn't duplicate.
 
-### [ ] T12 · POST /drivers (registration)
+### [x] T12 · POST /drivers (registration)
 Deps: T01 · Ships: `driver` module, `driver` actor type
 - Flow: `POST /auth/driver/emailpass/register` → token → `POST /drivers` (Bearer)
   → workflow creates driver + `setAuthAppMetadataStep`.

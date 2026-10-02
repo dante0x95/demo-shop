@@ -1,6 +1,7 @@
 import { configureStoreSearch, defineMiddlewares } from '@medusajs/framework/http'
 import { adminBrandRoutesMiddlewares } from './admin/brands/middlewares'
 import { adminMediaRoutesMiddlewares } from './admin/media/middlewares'
+import { driverRoutesMiddlewares } from './drivers/middlewares'
 import { storeBrandRoutesMiddlewares } from './store/brands/middlewares'
 
 // The product index declares filterable `status` and `sales_channel_ids`, so
@@ -9,6 +10,7 @@ export default defineMiddlewares({
   routes: [
     ...adminBrandRoutesMiddlewares,
     ...adminMediaRoutesMiddlewares,
+    ...driverRoutesMiddlewares,
     ...storeBrandRoutesMiddlewares,
     {
       method: ['POST'],
