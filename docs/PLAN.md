@@ -1,11 +1,31 @@
 # PLAN — pendientes.md backlog
 
-One task = one pendientes.md line = one PR. Do them in order; start a task only when its
-deps are merged. Prerequisites (module, link, workflow, middleware) ship inside the first
+One task = one pendientes.md line = one PR. Start a task only when its deps are merged; tasks
+whose deps are all merged can run in parallel (see "Parallel work"). Prerequisites (module, link, workflow, middleware) ship inside the first
 task that needs them. ❓ = decide with Dante at the plan gate. Reusable = module will be extracted into a plugin
 (see `.claude/rules/medusa-architecture.md`).
 
 Status: [ ] todo · [~] in PR · [x] merged
+
+## Parallel work (2-3 agent sessions)
+
+Each session runs `/next-task` in its own worktree: it takes any `[ ]` task whose deps are all
+`[x]` on `origin/main` and that no other session has claimed. No fixed order between sessions.
+Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
+
+Free right now: T08, T10, T11, T13, T14, T15 (and T07 if its ❓ is answered "allow").
+Blocked outside this backlog: T07.1 (custom admin phase).
+T13 and T15 unblock the most work (T16-T18), so `/next-task` picks T13 first (plan order).
+
+Files most PRs touch (expect small merge conflicts, see the rules file for how to resolve):
+
+| File | Touched by |
+|------|------------|
+| `pendientes.md`, `docs/PLAN.md` | every task |
+| `apps/backend/medusa-config.ts` | T09, T10, T12 (module registration), T19 |
+| `apps/backend/src/api/middlewares.ts` | T08, T09, T10, T12, T13, T14, T15, T19 |
+| `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19 |
+| `apps/backend/src/modules/brand/`, `src/workflows/brand/` | T08 (brand hook), T19 |
 
 ## Phase 1 — Brand (calibration)
 
@@ -76,7 +96,7 @@ Deps: T05
 - Paginated, newest first, filters: `q` (alt/filename), `mime_type`.
 
 ### [ ] T07 · DELETE /admin/media/:id
-Deps: T05
+Deps: T05, plus T08 if the ❓ below is answered "block" (T08 defines how products reference media)
 - Delete the record first, the file last (file deletion can't be compensated).
 - ❓ Asset in use by a product: block (409) or allow?
 
@@ -124,7 +144,7 @@ Deps: —
 - Idempotent script in `src/scripts` enabling `pp_system_default` in the store region.
 - Test: running it twice doesn't duplicate.
 
-### [ ] T12 · POST /drivers (registration)
+### [x] T12 · POST /drivers (registration)
 Deps: T01 · Ships: `driver` module, `driver` actor type
 - Flow: `POST /auth/driver/emailpass/register` → token → `POST /drivers` (Bearer)
   → workflow creates driver + `setAuthAppMetadataStep`.
@@ -164,7 +184,7 @@ Deps: T11, T17
 ## Phase 6 — Reuse
 
 ### [ ] T19 · Extract reusable modules into plugin(s)
-Deps: T04, T07, T09, T10
+Deps: T04, T07, T08, T09, T10 (T08 decides which brand/media code stays in the app)
 - Move every Reusable module (brand, media, metafield, package-preset) with its links,
   workflows, routes and admin UI into `packages/`, built with `medusa plugin:build`.
 - This shop consumes the plugin(s) via `plugins` in `medusa-config.ts`; shop workflows

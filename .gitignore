@@ -56,3 +56,6 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 **/.DS_Store
+
+# Claude Code worktrees (parallel agent sessions)
+.claude/worktrees/
