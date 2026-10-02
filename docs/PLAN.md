@@ -1,11 +1,31 @@
 # PLAN — pendientes.md backlog
 
-One task = one pendientes.md line = one PR. Do them in order; start a task only when its
-deps are merged. Prerequisites (module, link, workflow, middleware) ship inside the first
+One task = one pendientes.md line = one PR. Start a task only when its deps are merged; tasks
+whose deps are all merged can run in parallel (see "Parallel work"). Prerequisites (module, link, workflow, middleware) ship inside the first
 task that needs them. ❓ = decide with Dante at the plan gate. Reusable = module will be extracted into a plugin
 (see `.claude/rules/medusa-architecture.md`).
 
 Status: [ ] todo · [~] in PR · [x] merged
+
+## Parallel work (2-3 agent sessions)
+
+Each session runs `/next-task` in its own worktree: it takes any `[ ]` task whose deps are all
+`[x]` on `origin/main` and that no other session has claimed. No fixed order between sessions.
+Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
+
+Free right now: T08, T09, T10, T11, T12.
+Blocked outside this backlog: T07.1 (custom admin phase).
+T12 unblocks the most work (T13-T18), so `/next-task` picks it first.
+
+Files most PRs touch (expect small merge conflicts, see the rules file for how to resolve):
+
+| File | Touched by |
+|------|------------|
+| `pendientes.md`, `docs/PLAN.md` | every task |
+| `apps/backend/medusa-config.ts` | T09, T10, T12 (module registration), T19 |
+| `apps/backend/src/api/middlewares.ts` | T08, T09, T10, T12, T13, T14, T15, T19 |
+| `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19 |
+| `apps/backend/src/modules/brand/`, `src/workflows/brand/` | T08 (brand hook), T19 |
 
 ## Phase 1 — Brand (calibration)
 
@@ -76,10 +96,12 @@ Deps: T05
 - Paginated, newest first, filters: `q` (alt/filename), `mime_type`.
 
 ### [x] T07 · DELETE /admin/media/:id
-Deps: T05
+Deps: T05 (the "block" answer would have added T08; the in-use check by url below removes it)
 - Delete the record first, the file last (file deletion can't be compensated).
 - Decided: an asset in use by a product is blocked with 409. "In use" = a non-deleted product
   image with the asset's url (product images copy the url; no product ↔ media link yet).
+  Contract for T08: store images as product images with the asset's url, or, if T08 adds a
+  product ↔ media link, switch `validateMediaAssetNotInUseStep` to that link in the same PR.
 
 ### [ ] T07.1 · Direct-to-storage uploads (presigned URLs)
 Deps: T05, custom admin phase (changes how the frontend uploads)
@@ -101,6 +123,8 @@ Deps: T02, T05 · Ships: `create-product-full` workflow, `productsCreated` brand
 - Brand goes through `additional_data.brand_id`, linked by a `productsCreated` hook (validated
   with `additionalDataValidator`). Don't link twice.
 - All-or-nothing. Tests: happy path; unknown brand → 400; unknown location → 400 AND no product left behind.
+- Images keep T07's in-use check working: save them as product images with the asset's url, or
+  switch `validateMediaAssetNotInUseStep` to a new product ↔ media link in this PR.
 
 ## Phase 4 — Catalog config
 
@@ -160,7 +184,7 @@ Deps: T11, T17
 ## Phase 6 — Reuse
 
 ### [ ] T19 · Extract reusable modules into plugin(s)
-Deps: T04, T07, T09, T10
+Deps: T04, T07, T08, T09, T10 (T08 decides which brand/media code stays in the app)
 - Move every Reusable module (brand, media, metafield, package-preset) with its links,
   workflows, routes and admin UI into `packages/`, built with `medusa plugin:build`.
 - This shop consumes the plugin(s) via `plugins` in `medusa-config.ts`; shop workflows
