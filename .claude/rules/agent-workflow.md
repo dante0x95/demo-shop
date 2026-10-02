@@ -21,7 +21,8 @@ Never skip tests, use `.only`, or weaken an assertion to make it pass.
 - One task from `docs/PLAN.md` = one branch = one PR. Never start the next task in the same session.
 - Branch from up-to-date `main`: `feat/<task-id>-<slug>` (e.g. `feat/T05-media-upload`).
 - Small conventional commits: `feat(media): add media_asset model`.
-- Never push to `main`, merge, force-push, or rewrite history.
+- Never push to `main`, merge a PR, force-push, or rewrite history. Merging `origin/main` into
+  your own task branch is allowed (see below).
 - Task PRs never edit `pendientes.md`, nor status in `docs/PLAN.md` (`[ ]`/`[x]` headings,
   "Free right now"). Dante reconciles both by hand after merges. A task may only add its
   plan-gate decisions (`Decided:` bullets) inside its own section of `docs/PLAN.md`.

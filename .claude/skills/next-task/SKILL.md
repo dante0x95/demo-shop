@@ -15,9 +15,10 @@ Run this at the start of a session, inside its own git worktree. Follow
 - `git rev-parse --show-toplevel` must not be the main checkout. If it is, stop: tell the user
   to start the session with `claude --worktree <name>`.
 - `node_modules/` missing → `npm install`.
-- `apps/backend/.env` and `apps/backend/.env.test` missing → copy each from
-  `<main checkout>/apps/backend/`. Without `.env.test` the integration tests fail with
-  `role "postgres" does not exist`. Never print or commit them.
+- `apps/backend/.env` missing → copy it from `<main checkout>/apps/backend/.env`.
+- `apps/backend/.env.test` missing → copy it from `<main checkout>/apps/backend/.env.test`.
+  Without it the integration tests fail with `role "postgres" does not exist`.
+- Never print or commit either env file.
 
 ## 2. Read the board
 `<main checkout>/trabajo.md` is the board: git-ignored, one copy shared by every session.
