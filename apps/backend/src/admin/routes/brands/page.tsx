@@ -11,6 +11,7 @@ import {
 } from "@medusajs/ui"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { AdminBrand, brandQueryKeys, listBrands } from "../../lib/brands"
 import { CreateBrandModal } from "./components/create-brand-modal"
 
@@ -37,6 +38,7 @@ const columns = [
 ]
 
 const BrandsPage = () => {
+  const navigate = useNavigate()
   const [pagination, setPagination] = useState<DataTablePaginationState>({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
@@ -60,6 +62,7 @@ const BrandsPage = () => {
     getRowId: (brand) => brand.id,
     rowCount: data?.count ?? 0,
     isLoading,
+    onRowClick: (_, brand) => navigate(`/brands/${brand.id}`),
     pagination: {
       state: pagination,
       onPaginationChange: setPagination,
