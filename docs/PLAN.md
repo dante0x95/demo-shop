@@ -27,13 +27,13 @@ Deps: T01 · Ships: admin JS SDK client (`src/admin/lib/sdk.ts`)
 - Verify: `npm run build` passes; manual check in `/app`: list paginates, create works,
   duplicate shows the error. (No admin UI test suite exists.)
 
-### [~] T02 · GET/POST/DELETE /admin/brands/:id
+### [x] T02 · GET/POST/DELETE /admin/brands/:id
 Deps: T01 · Ships: `product ↔ brand` link
 - GET returns the brand with linked products. POST is a partial update.
 - DELETE via workflow: unlinks products, never deletes them.
 - Unknown id → 404 on all three.
 
-### [ ] T03 · GET /store/brands
+### [~] T03 · GET /store/brands
 Deps: T02
 - Publishable key required; paginated; public fields only.
 
