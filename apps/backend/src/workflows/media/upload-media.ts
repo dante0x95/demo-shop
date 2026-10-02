@@ -3,8 +3,8 @@ import {
   transform,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
-import { uploadFilesWorkflow } from "@medusajs/medusa/core-flows"
 import { createMediaAssetsStep } from "./steps/create-media-assets"
+import { uploadMediaFilesStep } from "./steps/upload-media-files"
 import { validateMediaFilesStep } from "./steps/validate-media-files"
 
 export type UploadMediaWorkflowInput = {
@@ -41,12 +41,11 @@ export const uploadMediaWorkflow = createWorkflow(
       }))
     )
 
-    // The core upload step deletes the uploaded files when a later step fails.
-    const uploadedFiles = uploadFilesWorkflow.runAsStep({
-      input: { files: filesToUpload },
-    })
+    // Deletes the uploaded files when a later step fails, and cleans up
+    // after itself when only some of the uploads succeed.
+    const uploadedFiles = uploadMediaFilesStep(filesToUpload)
 
-    // The file provider returns files in input order, so they zip by index.
+    // Uploaded files keep the input order, so they zip by index.
     const mediaAssetsData = transform(
       { input, uploadedFiles },
       ({ input, uploadedFiles }) =>
