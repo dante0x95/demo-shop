@@ -5,6 +5,7 @@ import { Modules } from "@medusajs/framework/utils"
 import {
   createProductsWorkflow,
   deleteProductsWorkflow,
+  updateProductVariantsWorkflow,
 } from "@medusajs/medusa/core-flows"
 import { createAdminUser } from "../helpers/admin-auth"
 import { buildMediaForm } from "../helpers/media-form"
@@ -49,7 +50,11 @@ medusaIntegrationTestRunner({
       return res.data.media_assets.map((asset: { id: string }) => asset.id)
     }
 
-    const createProductWithImage = async (url: string) => {
+    // A product that shows `url` in each of the given places.
+    const createProductUsing = async (
+      url: string,
+      usages: ("image" | "thumbnail" | "variant_thumbnail")[]
+    ) => {
       const {
         result: [product],
       } = await createProductsWorkflow(getContainer()).run({
@@ -58,14 +63,29 @@ medusaIntegrationTestRunner({
             {
               title: "Shirt",
               options: [{ title: "Size", values: ["M"] }],
-              images: [{ url }],
+              images: usages.includes("image") ? [{ url }] : [],
+              thumbnail: usages.includes("thumbnail") ? url : null,
+              variants: [{ title: "M", options: { Size: "M" } }],
             },
           ],
         },
       })
 
+      // Variant thumbnails can only be set on update, as in the admin API.
+      if (usages.includes("variant_thumbnail")) {
+        await updateProductVariantsWorkflow(getContainer()).run({
+          input: {
+            selector: { product_id: product.id },
+            update: { thumbnail: url },
+          },
+        })
+      }
+
       return product
     }
+
+    const conflictMessage = (id: string) =>
+      `Media asset with id: ${id} is used by 1 product(s). Remove it from their images and thumbnails before deleting it`
 
     describe("DELETE /admin/media/:id", () => {
       it("deletes the asset and its stored file", async () => {
@@ -100,32 +120,59 @@ medusaIntegrationTestRunner({
         expect(storedFileExists(other.file_id)).toBe(true)
       })
 
-      it("returns 409 and keeps the asset when a product uses it", async () => {
-        const asset = await uploadAsset()
-        await createProductWithImage(asset.url)
+      it.each([
+        ["an image", ["image"]],
+        ["the product thumbnail", ["thumbnail"]],
+        ["a variant thumbnail", ["variant_thumbnail"]],
+      ] as const)(
+        "returns 409 and keeps the asset when a product uses it as %s",
+        async (_, usages) => {
+          const asset = await uploadAsset()
+          await createProductUsing(asset.url, [...usages])
 
-        const deleteFilesSpy = jest.spyOn(
-          getContainer().resolve(Modules.FILE),
-          "deleteFiles"
-        )
+          const deleteFilesSpy = jest.spyOn(
+            getContainer().resolve(Modules.FILE),
+            "deleteFiles"
+          )
+
+          const err = await api
+            .delete(`/admin/media/${asset.id}`, adminHeaders)
+            .catch((e: any) => e)
+
+          expect(err.response.status).toBe(409)
+          expect(err.response.data).toEqual({
+            type: "conflict",
+            message: conflictMessage(asset.id),
+          })
+          expect(await listedIds()).toContain(asset.id)
+          expect(deleteFilesSpy).not.toHaveBeenCalled()
+          expect(storedFileExists(asset.file_id)).toBe(true)
+        }
+      )
+
+      it("counts a product that uses the asset in several places once", async () => {
+        const asset = await uploadAsset()
+        await createProductUsing(asset.url, [
+          "image",
+          "thumbnail",
+          "variant_thumbnail",
+        ])
 
         const err = await api
           .delete(`/admin/media/${asset.id}`, adminHeaders)
           .catch((e: any) => e)
 
         expect(err.response.status).toBe(409)
-        expect(err.response.data).toEqual({
-          type: "conflict",
-          message: `Media asset with id: ${asset.id} is used by 1 product(s). Remove it from their images before deleting it`,
-        })
-        expect(await listedIds()).toContain(asset.id)
-        expect(deleteFilesSpy).not.toHaveBeenCalled()
-        expect(storedFileExists(asset.file_id)).toBe(true)
+        expect(err.response.data.message).toBe(conflictMessage(asset.id))
       })
 
       it("deletes the asset once no product uses it anymore", async () => {
         const asset = await uploadAsset()
-        const product = await createProductWithImage(asset.url)
+        const product = await createProductUsing(asset.url, [
+          "image",
+          "thumbnail",
+          "variant_thumbnail",
+        ])
 
         await deleteProductsWorkflow(getContainer()).run({
           input: { ids: [product.id] },
