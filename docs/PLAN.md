@@ -172,6 +172,14 @@ Deps: T12
 Deps: T12 · Ships: `order ↔ driver` link, `assign-driver` workflow
 - One driver per order; reassigning replaces the previous link.
 - Canceled/completed order → 400; unknown order/driver → 404.
+- Decided: only `pending` or `requires_action` orders take a driver; `canceled`, `completed`,
+  `draft` and `archived` → 400.
+- Decided: an inactive driver (`is_active: false`) → 400.
+- Decided: an order with a delivered fulfillment (`delivered_at` set) → 400, so it can't be
+  moved to another driver after delivery.
+- Decided: assigning the current driver again is a 200 no-op. A partial unique index on the
+  link's `order_id` (migration script `order-driver-unique-order`) keeps one driver per order
+  under concurrent requests.
 
 ### [ ] T16 · GET /drivers/me/orders
 Deps: T13, T15
