@@ -119,7 +119,7 @@ Deps: —
 - Idempotent script in `src/scripts` enabling `pp_system_default` in the store region.
 - Test: running it twice doesn't duplicate.
 
-### [ ] T12 · POST /drivers (registration)
+### [x] T12 · POST /drivers (registration)
 Deps: T01 · Ships: `driver` module, `driver` actor type
 - Flow: `POST /auth/driver/emailpass/register` → token → `POST /drivers` (Bearer)
   → workflow creates driver + `setAuthAppMetadataStep`.

@@ -5,7 +5,7 @@
 - [x] media: biblioteca de medios (media_asset)
 - [ ] metafield: definiciones de campos personalizados
 - [ ] package-preset: cajas/paquetes predefinidos
-- [ ] driver: repartidores (actor type propio)
+- [x] driver: repartidores (actor type propio)
 
 ## Links
 - [x] product ↔ brand
@@ -33,7 +33,7 @@
 - [x] Marcas: detalle + editar + eliminar (con productos vinculados) + e2e
 
 ## Endpoints Driver (protegidos con authenticate("driver"))
-- [ ] POST /drivers (registro, junto con /auth/driver/emailpass/register)
+- [x] POST /drivers (registro, junto con /auth/driver/emailpass/register)
 - [ ] GET /drivers/me
 - [ ] GET /drivers/me/orders
 - [ ] POST /drivers/me/orders/:id/delivered
