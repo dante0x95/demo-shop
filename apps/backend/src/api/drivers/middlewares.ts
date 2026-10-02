@@ -5,7 +5,7 @@ import {
   validateAndTransformQuery,
 } from "@medusajs/framework/http"
 import { retrieveDriverTransformQueryConfig } from "./query-config"
-import { CreateDriver, GetDriverParams } from "./validators"
+import { CreateDriver, GetDriverMeParams, GetDriverParams } from "./validators"
 
 export const driverRoutesMiddlewares: MiddlewareRoute[] = [
   {
@@ -20,6 +20,21 @@ export const driverRoutesMiddlewares: MiddlewareRoute[] = [
       validateAndTransformBody(CreateDriver),
       validateAndTransformQuery(
         GetDriverParams,
+        retrieveDriverTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    // Every /drivers/me* route needs a registered driver (actor_id = driver.id).
+    matcher: "/drivers/me*",
+    middlewares: [authenticate("driver", ["session", "bearer"])],
+  },
+  {
+    method: ["GET"],
+    matcher: "/drivers/me",
+    middlewares: [
+      validateAndTransformQuery(
+        GetDriverMeParams,
         retrieveDriverTransformQueryConfig
       ),
     ],

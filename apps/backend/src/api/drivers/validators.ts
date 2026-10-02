@@ -6,6 +6,12 @@ export const GetDriverParams = createSelectParams()
 
 export type GetDriverParamsType = z.infer<typeof GetDriverParams>
 
+export const GetDriverMeParams = z.strictObject({
+  ...createSelectParams().shape,
+})
+
+export type GetDriverMeParamsType = z.infer<typeof GetDriverMeParams>
+
 // email comes from the auth identity and is_active is set by admins, so
 // neither is accepted here.
 export const CreateDriver = z.strictObject({
