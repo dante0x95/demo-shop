@@ -25,3 +25,5 @@ build
 !.yarn/versions
 
 .medusa
+# Local file provider uploads
+/static
