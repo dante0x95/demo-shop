@@ -2,6 +2,7 @@ import { configureStoreSearch, defineMiddlewares } from '@medusajs/framework/htt
 import { adminBrandRoutesMiddlewares } from './admin/brands/middlewares'
 import { adminMediaRoutesMiddlewares } from './admin/media/middlewares'
 import { adminMetafieldDefinitionRoutesMiddlewares } from './admin/metafield-definitions/middlewares'
+import { adminOrderRoutesMiddlewares } from './admin/orders/middlewares'
 import { driverRoutesMiddlewares } from './drivers/middlewares'
 import { storeBrandRoutesMiddlewares } from './store/brands/middlewares'
 
@@ -12,6 +13,7 @@ export default defineMiddlewares({
     ...adminBrandRoutesMiddlewares,
     ...adminMediaRoutesMiddlewares,
     ...adminMetafieldDefinitionRoutesMiddlewares,
+    ...adminOrderRoutesMiddlewares,
     ...driverRoutesMiddlewares,
     ...storeBrandRoutesMiddlewares,
     {
