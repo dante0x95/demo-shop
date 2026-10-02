@@ -5,25 +5,26 @@ whose deps are all merged can run in parallel (see "Parallel work"). Prerequisit
 task that needs them. ❓ = decide with Dante at the plan gate. Reusable = module will be extracted into a plugin
 (see `.claude/rules/medusa-architecture.md`).
 
-Status: [ ] todo · [~] in PR · [x] merged
+Status: [ ] todo · [x] merged. Reconciled by hand after merges; task PRs never change it.
+Work in progress lives in the local board `trabajo.md` (main checkout, not versioned).
 
 ## Parallel work (2-3 agent sessions)
 
-Each session runs `/next-task` in its own worktree: it takes any `[ ]` task whose deps are all
-`[x]` on `origin/main` and that no other session has claimed. No fixed order between sessions.
+Each session runs `/next-task` in its own worktree: it takes any task whose deps are all done
+(`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
 Free right now: T08, T10, T11, T13, T14, T15.
 Blocked outside this backlog: T07.1 (custom admin phase).
 T13 and T15 unblock the most work (T16-T18), so `/next-task` picks T13 first (plan order).
 
-Files most PRs touch (expect small merge conflicts, see the rules file for how to resolve):
+Files several tasks touch (see the rules file for how to resolve a conflict):
 
 | File | Touched by |
 |------|------------|
-| `pendientes.md`, `docs/PLAN.md` | every task |
-| `apps/backend/medusa-config.ts` | T09, T10, T12 (module registration), T19 |
-| `apps/backend/src/api/middlewares.ts` | T08, T09, T10, T12, T13, T14, T15, T19 |
+| `apps/backend/medusa-config.ts` | T10 (module registration), T19 |
+| `apps/backend/src/api/middlewares.ts` | T08, T10, T14, T15, T19 |
+| `src/api/drivers/middlewares.ts` | T13, T16, T17, T18 (a chain, never in parallel) |
 | `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19 |
 | `apps/backend/src/modules/brand/`, `src/workflows/brand/` | T08 (brand hook), T19 |
 

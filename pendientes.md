@@ -3,6 +3,8 @@
 ## Trabajo en paralelo (2-3 sesiones)
 Cada sesión, en su propio worktree, ejecuta `/next-task`: toma cualquier tarea **libre** que
 ninguna otra sesión haya reclamado. Detalle: `docs/PLAN.md` → "Parallel work".
+Lo que está en curso va en `trabajo.md` (checkout principal, local, no versionado). Los PRs de
+tareas no tocan este archivo: los checks y etiquetas se concilian a mano después de mergear.
 
 Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 **tras Txx** = espera a que esas tareas estén mergeadas.
