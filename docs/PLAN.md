@@ -98,9 +98,10 @@ Deps: T05
 ### [x] T07 · DELETE /admin/media/:id
 Deps: T05 (the "block" answer would have added T08; the in-use check by url below removes it)
 - Delete the record first, the file last (file deletion can't be compensated).
-- Decided: an asset in use by a product is blocked with 409. "In use" = a non-deleted product
-  image with the asset's url (product images copy the url; no product ↔ media link yet).
-  Contract for T08: store images as product images with the asset's url, or, if T08 adds a
+- Decided: an asset in use by a product is blocked with 409. "In use" = the asset's url is a
+  non-deleted product's image, product thumbnail or variant thumbnail (all three copy the url;
+  no product ↔ media link yet).
+  Contract for T08: store images and thumbnails as those url fields, or, if T08 adds a
   product ↔ media link, switch `validateMediaAssetNotInUseStep` to that link in the same PR.
 
 ### [ ] T07.1 · Direct-to-storage uploads (presigned URLs)
@@ -123,7 +124,7 @@ Deps: T02, T05 · Ships: `create-product-full` workflow, `productsCreated` brand
 - Brand goes through `additional_data.brand_id`, linked by a `productsCreated` hook (validated
   with `additionalDataValidator`). Don't link twice.
 - All-or-nothing. Tests: happy path; unknown brand → 400; unknown location → 400 AND no product left behind.
-- Images keep T07's in-use check working: save them as product images with the asset's url, or
+- Images keep T07's in-use check working: save images and thumbnails as the asset's url, or
   switch `validateMediaAssetNotInUseStep` to a new product ↔ media link in this PR.
 
 ## Phase 4 — Catalog config
