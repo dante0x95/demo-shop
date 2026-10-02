@@ -30,6 +30,7 @@
 
 ## Admin UI (panel de Medusa, temporal)
 - [x] Marcas: listado + crear
+- [ ] Marcas: detalle + editar + eliminar (con productos vinculados) + e2e
 
 ## Endpoints Driver (protegidos con authenticate("driver"))
 - [ ] POST /drivers (registro, junto con /auth/driver/emailpass/register)
@@ -40,7 +41,7 @@
 
 ## Endpoints Store (storefront + agente de WhatsApp)
 - [x] GET /store/brands
-- [ ] GET /store/brands/:id/products
+- [x] GET /store/brands/:id/products
 
 ## Middlewares
 - [ ] additional_data.brand_id en creación de producto

@@ -1,3 +1,5 @@
+import { retrieveProductQueryConfig } from "@medusajs/medusa/api/store/products/query-config"
+
 export const defaultStoreBrandFields = [
   "id",
   "name",
@@ -13,6 +15,13 @@ export const listStoreBrandsTransformQueryConfig = {
   defaults: defaultStoreBrandFields,
   allowed: defaultStoreBrandFields,
   disallowed: ["products", "metadata", "is_active"],
+  defaultLimit: 20,
+  isList: true,
+}
+
+// Same fields as core `GET /store/products`, so storefronts get one product shape.
+export const listStoreBrandProductsTransformQueryConfig = {
+  ...retrieveProductQueryConfig,
   defaultLimit: 20,
   isList: true,
 }

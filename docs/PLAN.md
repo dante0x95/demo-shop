@@ -37,10 +37,24 @@ Deps: T01 · Ships: `product ↔ brand` link
 Deps: T02
 - Publishable key required; paginated; public fields only.
 
-### [ ] T04 · GET /store/brands/:id/products
+### [x] T04 · GET /store/brands/:id/products
 Deps: T03
 - Only `published` products in the key's sales channel; paginated.
 - Variants with calculated prices for a `region_id` query param (the WhatsApp agent needs prices).
+- Decided: `region_id` is required (missing/unknown → 400); inactive or deleted brand → 404.
+
+### [ ] T04.1 · Admin panel: Brand detail (edit, delete, linked products)
+Deps: T02, T04 · Ships: `src/admin/routes/brands/[id]/page.tsx`
+- Clicking a row in the Brands table opens a detail page (`GET /admin/brands/:id`) showing the
+  brand fields and its linked products.
+- Edit form calls `POST /admin/brands/:id`; show the API's 400 messages (duplicate
+  name/handle, invalid URL).
+- Delete button with confirmation calls `DELETE /admin/brands/:id`, then returns to the list.
+  Products are unlinked, never deleted.
+- Load the `building-admin-dashboard-customizations` skill first. No new endpoints.
+- E2E (`e2e/admin/brand-detail.spec.ts`): open detail from the list; edit persists after reload;
+  duplicate name shows the error; delete removes the brand from the list and keeps the product;
+  unknown id shows a not-found state.
 
 ## Phase 2 — Media library
 
