@@ -169,6 +169,26 @@ medusaIntegrationTestRunner({
         }
       )
 
+      it("never lists a deleted brand", async () => {
+        await api.delete(`/admin/brands/${zara.id}`, adminHeaders)
+
+        const res = await api.get("/store/brands?handle=zara", storeHeaders)
+
+        expect(res.status).toBe(200)
+        expect(res.data.count).toBe(0)
+        expect(res.data.brands).toEqual([])
+      })
+
+      it("returns 400 for with_deleted", async () => {
+        await api.delete(`/admin/brands/${zara.id}`, adminHeaders)
+
+        const res = await api
+          .get("/store/brands?with_deleted=true", storeHeaders)
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(400)
+      })
+
       it("returns 400 for an invalid limit", async () => {
         const res = await api
           .get("/store/brands?limit=abc", storeHeaders)
