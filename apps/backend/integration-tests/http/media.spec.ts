@@ -251,8 +251,153 @@ medusaIntegrationTestRunner({
 
         expect(res.status).toBe(500)
 
-        const [createdFiles] = await createFilesSpy.mock.results[0].value
-        expect(deleteFilesSpy).toHaveBeenCalledWith([createdFiles.id])
+        const createdFile = await createFilesSpy.mock.results[0].value
+        expect(deleteFilesSpy).toHaveBeenCalledWith([createdFile.id])
+        expect(await countMediaAssets()).toBe(0)
+      })
+
+      it("deletes the files that uploaded when another upload fails", async () => {
+        const fileModuleService = getContainer().resolve(Modules.FILE)
+        const createFiles = fileModuleService.createFiles.bind(fileModuleService)
+
+        const createFilesSpy = jest
+          .spyOn(fileModuleService, "createFiles")
+          .mockImplementationOnce(createFiles)
+          .mockRejectedValueOnce(new Error("storage unavailable"))
+        const deleteFilesSpy = jest.spyOn(fileModuleService, "deleteFiles")
+
+        const res = await api
+          .post(
+            "/admin/media",
+            buildForm([
+              { name: "front.png", type: "image/png" },
+              { name: "back.png", type: "image/png" },
+            ]),
+            adminHeaders
+          )
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(500)
+        expect(createFilesSpy).toHaveBeenCalledTimes(2)
+
+        const uploadedFile = await createFilesSpy.mock.results[0].value
+        expect(deleteFilesSpy).toHaveBeenCalledTimes(1)
+        expect(deleteFilesSpy).toHaveBeenCalledWith([uploadedFile.id])
+        expect(await countMediaAssets()).toBe(0)
+      })
+
+      it("stores the exact bytes that were uploaded", async () => {
+        // Bytes that are not valid UTF-8 catch any text re-encoding.
+        const content = Buffer.concat([
+          imageContent("image/png"),
+          Buffer.from([0x00, 0xff, 0xfe, 0x80, 0xc3, 0x28, 0x0d, 0x0a]),
+        ])
+
+        const res = await api.post(
+          "/admin/media",
+          buildForm([{ name: "bytes.png", type: "image/png", content }]),
+          adminHeaders
+        )
+
+        const [mediaAsset] = res.data.media_assets
+        const stored = await api.get(new URL(mediaAsset.url).pathname, {
+          responseType: "arraybuffer",
+        })
+
+        expect(mediaAsset.size).toBe(content.length)
+        expect(Buffer.from(stored.data).equals(content)).toBe(true)
+      })
+
+      it("accepts a file of exactly the maximum size", async () => {
+        const signature = imageContent("image/png")
+        const content = Buffer.concat([
+          signature,
+          Buffer.alloc(DEFAULT_MAX_FILE_SIZE - signature.length),
+        ])
+
+        const res = await api.post(
+          "/admin/media",
+          buildForm([{ name: "max.png", type: "image/png", content }]),
+          adminHeaders
+        )
+
+        expect(res.status).toBe(200)
+        expect(res.data.media_assets[0].size).toBe(DEFAULT_MAX_FILE_SIZE)
+      })
+
+      it("accepts exactly the maximum number of files", async () => {
+        const form = buildForm(
+          Array.from({ length: DEFAULT_MAX_FILES }, (_, index) => ({
+            name: `photo-${index}.png`,
+            type: "image/png",
+          }))
+        )
+
+        const res = await api.post("/admin/media", form, adminHeaders)
+
+        expect(res.status).toBe(200)
+        expect(res.data.media_assets).toHaveLength(DEFAULT_MAX_FILES)
+      })
+
+      it("matches alt values to files by index", async () => {
+        const form = buildForm(
+          [
+            { name: "a.png", type: "image/png" },
+            { name: "b.png", type: "image/png" },
+            { name: "c.png", type: "image/png" },
+            { name: "d.png", type: "image/png" },
+          ],
+          ["  Front view  ", "", "   "]
+        )
+
+        const res = await api.post("/admin/media", form, adminHeaders)
+
+        expect(res.status).toBe(200)
+        expect(
+          res.data.media_assets.map(
+            (asset: { filename: string; alt: string | null }) => [
+              asset.filename,
+              asset.alt,
+            ]
+          )
+        ).toEqual([
+          ["a.png", "Front view"],
+          ["b.png", null],
+          ["c.png", null],
+          ["d.png", null],
+        ])
+
+        const mediaModuleService: MediaModuleService =
+          getContainer().resolve(MEDIA_MODULE)
+        const persisted = await mediaModuleService.listMediaAssets({
+          id: res.data.media_assets.map((asset: { id: string }) => asset.id),
+        })
+
+        expect(
+          Object.fromEntries(persisted.map((asset) => [asset.filename, asset.alt]))
+        ).toEqual({
+          "a.png": "Front view",
+          "b.png": null,
+          "c.png": null,
+          "d.png": null,
+        })
+      })
+
+      it("returns 400 when there are more alt values than files", async () => {
+        const form = buildForm(
+          [
+            { name: "a.png", type: "image/png" },
+            { name: "b.png", type: "image/png" },
+          ],
+          ["A", "B", "C"]
+        )
+
+        const res = await api
+          .post("/admin/media", form, adminHeaders)
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(400)
+        expect(res.data.message).toBe("Received 3 alt values for 2 files")
         expect(await countMediaAssets()).toBe(0)
       })
 
