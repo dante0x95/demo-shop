@@ -1,75 +1,108 @@
 # Copilot Code Review Instructions
 
-## Purpose
+## Review role
 
-When reviewing pull requests in this repository, focus on code quality and maintainability.
+This review has ONE responsibility:
 
-Another reviewer is responsible for functional correctness, tests, requirements, security, runtime behavior, and edge cases.
+Evaluate the changed code for readability, simplicity, maintainability, naming, structure, consistency, and unnecessary complexity.
+
+Other reviewers are responsible for correctness, runtime behavior, tests, requirements, security, edge cases, and functional validation.
+
+Do not evaluate those areas.
+
+## Important scope rule
+
+Do NOT treat the following as findings, risks, blockers, uncertainties, or reasons to withhold approval:
+
+- Tests not being executed.
+- Runtime behavior not being independently verified.
+- Functional correctness not being independently verified.
+- Requirements not being validated.
+- Test coverage not being validated.
+- Security not being reviewed.
+- Edge cases not being reviewed.
+
+These areas are intentionally delegated to other reviewers.
+
+Their absence from this review is expected and must not negatively affect the code-quality assessment.
+
+Do not recommend running tests or performing runtime verification.
+
+Do not use lack of runtime/test verification as a reason to characterize the PR as not ready.
 
 ## Review focus
 
-Review changed code for:
+Review ONLY the changed code for:
 
-- Readability and ease of understanding.
+- Readability.
+- Ease of understanding.
 - Clear and intention-revealing names.
-- Simple and easy-to-follow control flow.
-- Unnecessary complexity or cleverness.
-- Over-engineering and premature abstractions.
+- Simple control flow.
+- Unnecessary complexity.
+- Over-engineering.
+- Premature abstractions.
 - Unnecessary wrappers, helpers, factories, interfaces, or layers.
-- Functions or methods with too many unrelated responsibilities.
-- Code structure and placement of related logic.
-- Consistency with existing patterns in the surrounding codebase.
-- Duplication only when it materially harms readability or maintainability.
-- Comments that explain unnecessary complexity instead of simplifying the code.
+- Functions or methods with unrelated responsibilities.
+- Placement and organization of related logic.
+- Consistency with existing patterns in the repository.
+- Duplication when it materially harms readability or maintainability.
+- Clever code that could be written more explicitly.
 
-Prefer simple, explicit, boring code over clever or highly abstract code.
+Prefer simple, explicit, boring code.
 
-Prefer the conventions already used in the repository over subjective style preferences.
+Prefer existing repository conventions over subjective style preferences.
 
 Do not suggest abstractions for hypothetical future reuse.
 
-Do not recommend refactors unless they make the current code meaningfully easier to understand or maintain.
+Do not recommend refactors unless they materially improve the readability or maintainability of the code as it exists today.
 
-If the implementation is already clear and simple, do not invent feedback.
+If the code is already clear and simple, no finding is necessary.
 
 ## Out of scope
 
-Do not review or comment on:
+Do NOT review:
 
 - Functional correctness.
 - Business logic correctness.
-- Product or ticket requirements.
-- Test coverage or missing tests.
-- Test correctness.
 - Runtime behavior.
+- Product requirements.
+- Ticket acceptance criteria.
+- Test correctness.
+- Test coverage.
+- Missing tests.
 - Edge cases.
 - Security.
-- Performance, unless complexity directly harms readability or maintainability.
-- Formatting handled by linters, formatters, or automated tooling.
+- Performance, except when complexity directly hurts readability or maintainability.
+- Merge readiness based on any of the above.
 
-Avoid duplicating feedback that belongs to those areas.
+Another reviewer owns these concerns.
 
-## Review comments
+## Comments
 
-Only leave a comment when there is a concrete, actionable improvement.
+Only leave a comment when there is a concrete code-quality improvement.
 
-Comments should be concise and explain:
+A useful comment should identify:
 
 - What is unnecessarily difficult to understand or maintain.
 - Why it matters.
-- A simpler or clearer alternative, when useful.
+- A simpler or clearer alternative when appropriate.
 
 Avoid:
 
 - Nitpicking.
-- Personal style preferences.
+- Subjective style preferences.
 - Speculative future-proofing.
 - Unnecessary rewrites.
-- Repeating the same concern in multiple places.
-- Suggesting additional abstractions without a clear current need.
+- Repeating the same concern.
+- Formatting feedback handled by automated tooling.
+- Suggestions for additional abstractions without a current need.
 
 ## Guiding principle
 
-Optimize for code that another engineer can understand quickly, modify confidently, and explain without excessive context.
+Answer this question:
 
-Prefer the simplest implementation that clearly expresses the current requirement.
+"Is this code as simple, readable, understandable, and maintainable as it reasonably can be for the problem it is solving?"
+
+Evaluate only the code itself.
+
+Do not penalize the PR because runtime, tests, requirements, security, or functional behavior were not independently verified.
