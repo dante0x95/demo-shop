@@ -26,6 +26,21 @@ Never skip tests, use `.only`, or weaken an assertion to make it pass.
 - Open the PR with `gh pr create` using the template below, then STOP.
 - Review feedback = new commits on the same branch.
 
+## Parallel sessions (2-3 agents at once)
+- One git worktree per session; never two sessions in the same checkout. Start each session
+  with `claude --worktree <name>` and run `/next-task`.
+- `/next-task` picks and claims the task: any `[ ]` task whose `Deps:` are all `[x]` on
+  `origin/main` and that has no claim (`refs/claims/<task-id>`), branch or open PR. Never start
+  a task by hand without that check, and never start one whose deps are not merged.
+- Shared files are listed in `docs/PLAN.md` → "Parallel work". In them (`middlewares.ts`,
+  `medusa-config.ts`, imports) insert new entries in their sorted/grouped position, not always
+  at the end, so parallel PRs touch different lines.
+- Conflict with `main`: `git merge origin/main` into the task branch, keep both sides, re-run
+  the Definition of Done, push a normal commit. Never rebase or force-push.
+- Integration tests are safe in parallel (each suite creates its own database and port).
+  Not safe in parallel: `npm run test:e2e` (fixed `medusa_e2e` database, port 9001) and
+  `medusa develop` (port 9000); only one session runs each at a time.
+
 ## PR template
 ### What
 ### Why (pendientes.md item)
