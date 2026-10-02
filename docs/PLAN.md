@@ -60,13 +60,15 @@ Deps: T02, T04 · Ships: `src/admin/routes/brands/[id]/page.tsx`
 
 ### [x] T05 · POST /admin/media
 Deps: T01 · Ships: `media` module (`media_asset`, Reusable), multer middleware
-- Upload with core `uploadFilesWorkflow`, then create `media_asset` rows
-  (url, file_id, mime_type, size, alt).
-- If row creation fails, compensation deletes the uploaded files.
+- Upload the files, then create `media_asset` rows (url, file_id, mime_type, size, alt).
+- If row creation fails, compensation deletes the uploaded files. If only some uploads
+  succeed, those are deleted too (own step: core `uploadFilesStep` can't clean up after a
+  partial failure).
 - Decided: images only (jpeg, png, webp, gif, avif; no SVG), max 5 MB per file, max 10 files
   per request; all overridable via `media` module options, which `medusa-config.ts` fills from
   `MEDIA_MAX_FILE_SIZE`, `MEDIA_MAX_FILES`, `MEDIA_ALLOWED_MIME_TYPES`. Extension and file
-  signature must match the declared type. `alt` is optional, sent per file by index.
+  signature must match the declared type. `alt` is optional, sent per file by index; more
+  `alt` values than files → 400.
 - Tests: 2 images → 200; non-image → 400; no auth → 401.
 
 ### [ ] T06 · GET /admin/media
@@ -77,6 +79,16 @@ Deps: T05
 Deps: T05
 - Delete the record first, the file last (file deletion can't be compensated).
 - ❓ Asset in use by a product: block (409) or allow?
+
+### [ ] T07.1 · Direct-to-storage uploads (presigned URLs)
+Deps: T05, custom admin phase (changes how the frontend uploads)
+- Shopify-style: the client asks for presigned upload URLs (file module `getUploadFileUrls`),
+  uploads the bytes straight to storage, then `POST /admin/media` only registers them. The
+  backend never holds file bytes in memory.
+- Needs a provider that supports presigned uploads (e.g. S3); keep the multipart path for the
+  local provider.
+- ❓ Provider for production. ❓ How content is verified when the bytes never reach the backend.
+- ❓ Cleanup of files uploaded but never registered.
 
 ## Phase 3 — Shopify-style product creation
 
