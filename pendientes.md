@@ -3,7 +3,7 @@
 ## Módulos
 - [x] brand
 - [x] media: biblioteca de medios (media_asset)
-- [ ] metafield: definiciones de campos personalizados
+- [x] metafield: definiciones de campos personalizados
 - [ ] package-preset: cajas/paquetes predefinidos
 - [ ] driver: repartidores (actor type propio)
 
@@ -23,7 +23,7 @@
 - [x] POST /admin/media (subir + registrar)
 - [x] GET /admin/media (biblioteca, con paginación)
 - [ ] DELETE /admin/media/:id
-- [ ] GET/POST/DELETE /admin/metafield-definitions
+- [x] GET/POST/DELETE /admin/metafield-definitions
 - [ ] GET/POST/DELETE /admin/package-presets
 - [ ] GET/POST /admin/drivers
 - [ ] POST /admin/orders/:id/assign-driver

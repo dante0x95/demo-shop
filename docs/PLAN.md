@@ -103,10 +103,15 @@ Deps: T02, T05 · Ships: `create-product-full` workflow, `productsCreated` brand
 
 ## Phase 4 — Catalog config
 
-### [ ] T09 · GET/POST/DELETE /admin/metafield-definitions
+### [x] T09 · GET/POST/DELETE /admin/metafield-definitions
 Deps: T01 · Ships: `metafield` module (Reusable)
 - key (unique per owner type), label, type (text/number/boolean/select), options, owner type.
-- ❓ Where values live: product `metadata` or own table.
+- Decided: values live in their own table in the `metafield` module, shipped by a later task;
+  T09 ships definitions only (soft delete, nothing to clean up).
+- Decided: allowed owner types come from the `owner_types` module option (default `["product"]`).
+- Decided: `key` must match `^[a-z][a-z0-9_]{0,63}$` (400 otherwise, never rewritten);
+  `options` required and unique for `select`, rejected for other types.
+- Decided: no update endpoint: list, create, GET /:id, DELETE /:id.
 
 ### [ ] T10 · GET/POST/DELETE /admin/package-presets
 Deps: T01 · Ships: `package-preset` module (Reusable)
