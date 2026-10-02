@@ -39,7 +39,7 @@
 - [ ] POST /drivers/me/orders/:id/collect-payment
 
 ## Endpoints Store (storefront + agente de WhatsApp)
-- [ ] GET /store/brands
+- [x] GET /store/brands
 - [ ] GET /store/brands/:id/products
 
 ## Middlewares
