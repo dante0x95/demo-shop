@@ -25,6 +25,9 @@ module.exports = defineConfig({
       resolve: './src/modules/brand',
     },
     {
+      resolve: './src/modules/driver',
+    },
+    {
       resolve: './src/modules/media',
       options: {
         max_file_size: optionalNumber(process.env.MEDIA_MAX_FILE_SIZE),
