@@ -10,7 +10,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Módulos
 - [x] brand
 - [x] media: biblioteca de medios (media_asset)
-- [ ] metafield: definiciones de campos personalizados · T09 · libre
+- [x] metafield: definiciones de campos personalizados
 - [ ] package-preset: cajas/paquetes predefinidos · T10 · libre
 - [x] driver: repartidores (actor type propio)
 
@@ -30,7 +30,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] POST /admin/media (subir + registrar)
 - [x] GET /admin/media (biblioteca, con paginación)
 - [x] DELETE /admin/media/:id · T07
-- [ ] GET/POST/DELETE /admin/metafield-definitions · T09 · libre
+- [x] GET/POST/DELETE /admin/metafield-definitions · T09
 - [ ] GET/POST/DELETE /admin/package-presets · T10 · libre
 - [ ] GET/POST /admin/drivers · T14 · libre
 - [ ] POST /admin/orders/:id/assign-driver · T15 · libre
