@@ -30,7 +30,7 @@
 
 ## Admin UI (panel de Medusa, temporal)
 - [x] Marcas: listado + crear
-- [ ] Marcas: detalle + editar + eliminar (con productos vinculados) + e2e
+- [x] Marcas: detalle + editar + eliminar (con productos vinculados) + e2e
 
 ## Endpoints Driver (protegidos con authenticate("driver"))
 - [ ] POST /drivers (registro, junto con /auth/driver/emailpass/register)
