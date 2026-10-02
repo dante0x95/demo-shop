@@ -7,7 +7,56 @@ import {
   MedusaError,
 } from "@medusajs/framework/utils"
 import { uploadMediaWorkflow } from "../../../workflows/media/upload-media"
-import { AdminUploadMediaType } from "./validators"
+import {
+  AdminGetMediaAssetsParamsType,
+  AdminUploadMediaType,
+} from "./validators"
+
+// Escapes LIKE wildcards so `q` is matched literally.
+const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&")
+
+export const GET = async (
+  req: AuthenticatedMedusaRequest<unknown, AdminGetMediaAssetsParamsType>,
+  res: MedusaResponse
+) => {
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const { q, mime_type } = req.validatedQuery
+
+  const filters: Record<string, unknown> = {}
+
+  if (q) {
+    const pattern = `%${escapeLike(q)}%`
+    filters.$or = [
+      { alt: { $ilike: pattern } },
+      { filename: { $ilike: pattern } },
+    ]
+  }
+
+  if (mime_type) {
+    filters.mime_type = mime_type
+  }
+
+  // Assets uploaded together share `created_at`, so `id` breaks ties and
+  // keeps pages from skipping or repeating them.
+  const order = req.queryConfig.pagination?.order ?? {}
+
+  const { data: media_assets, metadata } = await query.graph({
+    entity: "media_asset",
+    ...req.queryConfig,
+    pagination: {
+      ...req.queryConfig.pagination,
+      order: { ...order, id: order.id ?? "DESC" },
+    },
+    filters,
+  })
+
+  res.json({
+    media_assets,
+    count: metadata?.count ?? 0,
+    offset: metadata?.skip ?? 0,
+    limit: metadata?.take ?? 0,
+  })
+}
 
 export const POST = async (
   req: AuthenticatedMedusaRequest<AdminUploadMediaType>,

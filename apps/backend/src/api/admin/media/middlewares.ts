@@ -10,8 +10,15 @@ import { MedusaError } from "@medusajs/framework/utils"
 import multer from "multer"
 import { MEDIA_MODULE } from "../../../modules/media"
 import MediaModuleService from "../../../modules/media/service"
-import { retrieveMediaAssetTransformQueryConfig } from "./query-config"
-import { AdminGetMediaAssetParams, AdminUploadMedia } from "./validators"
+import {
+  listMediaAssetsTransformQueryConfig,
+  retrieveMediaAssetTransformQueryConfig,
+} from "./query-config"
+import {
+  AdminGetMediaAssetParams,
+  AdminGetMediaAssetsParams,
+  AdminUploadMedia,
+} from "./validators"
 
 // Parses the multipart body into memory, capped by the media module's
 // max_file_size and max_files so a request can't buffer more than that.
@@ -49,6 +56,16 @@ const parseMediaFiles = async (
 }
 
 export const adminMediaRoutesMiddlewares: MiddlewareRoute[] = [
+  {
+    method: ["GET"],
+    matcher: "/admin/media",
+    middlewares: [
+      validateAndTransformQuery(
+        AdminGetMediaAssetsParams,
+        listMediaAssetsTransformQueryConfig
+      ),
+    ],
+  },
   {
     method: ["POST"],
     matcher: "/admin/media",

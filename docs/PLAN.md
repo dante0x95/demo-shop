@@ -71,7 +71,7 @@ Deps: T01 · Ships: `media` module (`media_asset`, Reusable), multer middleware
   `alt` values than files → 400.
 - Tests: 2 images → 200; non-image → 400; no auth → 401.
 
-### [ ] T06 · GET /admin/media
+### [x] T06 · GET /admin/media
 Deps: T05
 - Paginated, newest first, filters: `q` (alt/filename), `mime_type`.
 
