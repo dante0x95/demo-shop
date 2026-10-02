@@ -23,12 +23,8 @@ Files several tasks touch (see the rules file for how to resolve a conflict):
 | File | Touched by |
 |------|------------|
 | `apps/backend/medusa-config.ts` | T10 (module registration), T19 |
-| `src/api/admin/products/middlewares.ts` | T08 (pre-registered group) |
-| `src/api/admin/package-presets/middlewares.ts` | T10 (pre-registered group) |
-| `src/api/admin/drivers/middlewares.ts` | T14 (pre-registered group) |
-| `src/api/admin/orders/middlewares.ts` | T15 (pre-registered group) |
+| `apps/backend/src/api/middlewares.ts` | T08, T10, T14, T15, T19 |
 | `src/api/drivers/middlewares.ts` | T13, T16, T17, T18 (a chain, never in parallel) |
-| `apps/backend/src/api/middlewares.ts` | T19 only; groups above are already registered |
 | `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19 |
 | `apps/backend/src/modules/brand/`, `src/workflows/brand/` | T08 (brand hook), T19 |
 

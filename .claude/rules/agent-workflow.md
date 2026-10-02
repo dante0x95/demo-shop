@@ -41,9 +41,9 @@ Never skip tests, use `.only`, or weaken an assertion to make it pass.
   or on `origin/main`) and that has no board line, claim (`refs/claims/<task-id>`), branch or
   open PR. Never start a task by hand without that check, and never start one whose deps are
   not merged.
-- Route groups are pre-registered in `src/api/middlewares.ts`: a task adds its routes to its own
-  `src/api/**/middlewares.ts` and doesn't touch the root file. If a task needs a new group, or
-  another shared file (`medusa-config.ts`, imports), insert the entry in its sorted position.
+- Shared code files are listed in `docs/PLAN.md` → "Parallel work". In them (`middlewares.ts`,
+  `medusa-config.ts`, imports) insert new entries in their sorted position, not always at the
+  end, so parallel PRs touch different lines.
 - Conflict with `main`: `git merge origin/main` into the task branch, keep both sides, re-run
   the Definition of Done, push a normal commit. Never rebase or force-push.
 - Integration tests are safe in parallel (each suite creates its own database and port).
