@@ -32,5 +32,8 @@ module.exports = defineConfig({
         allowed_mime_types: optionalList(process.env.MEDIA_ALLOWED_MIME_TYPES),
       },
     },
+    {
+      resolve: './src/modules/metafield',
+    },
   ],
 })
