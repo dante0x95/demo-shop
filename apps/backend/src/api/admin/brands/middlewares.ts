@@ -3,6 +3,7 @@ import {
   validateAndTransformBody,
   validateAndTransformQuery,
 } from "@medusajs/framework/http"
+import { z } from "@medusajs/framework/zod"
 import {
   listBrandsTransformQueryConfig,
   retrieveBrandDetailTransformQueryConfig,
@@ -57,5 +58,14 @@ export const adminBrandRoutesMiddlewares: MiddlewareRoute[] = [
         retrieveBrandDetailTransformQueryConfig
       ),
     ],
+  },
+  // Core product creation accepts the brand; the `productsCreated` hook
+  // (src/workflows/brand/hooks/products-created.ts) links it.
+  {
+    method: ["POST"],
+    matcher: "/admin/products",
+    additionalDataValidator: {
+      brand_id: z.string().trim().min(1).optional(),
+    },
   },
 ]
