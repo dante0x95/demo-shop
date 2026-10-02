@@ -21,3 +21,17 @@ export const listBrandsTransformQueryConfig = {
   defaultLimit: 20,
   isList: true,
 }
+
+export const defaultAdminBrandDetailFields = [
+  ...defaultAdminBrandFields,
+  "products.id",
+  "products.title",
+  "products.handle",
+  "products.status",
+  "products.thumbnail",
+]
+
+export const retrieveBrandDetailTransformQueryConfig = {
+  defaults: defaultAdminBrandDetailFields,
+  isList: false,
+}

@@ -26,3 +26,15 @@ export const AdminCreateBrand = z.strictObject({
 })
 
 export type AdminCreateBrandType = z.infer<typeof AdminCreateBrand>
+
+export const AdminUpdateBrand = z.strictObject({
+  name: z.string().trim().min(1).optional(),
+  handle: z.string().trim().min(1).optional(),
+  description: z.string().nullish(),
+  logo_url: z.url().nullish(),
+  banner_url: z.url().nullish(),
+  is_active: z.boolean().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullish(),
+})
+
+export type AdminUpdateBrandType = z.infer<typeof AdminUpdateBrand>
