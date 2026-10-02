@@ -127,6 +127,11 @@ Deps: T02, T05 · Ships: `create-product-full` workflow, `productsCreated` brand
 - All-or-nothing. Tests: happy path; unknown brand → 400; unknown location → 400 AND no product left behind.
 - Images keep T07's in-use check working: save images and thumbnails as the asset's url, or
   switch `validateMediaAssetNotInUseStep` to a new product ↔ media link in this PR.
+- Decided: `brand_id` optional; any existing brand is accepted, inactive too (unknown/deleted
+  → 400). Core `POST /admin/products` accepts it too, through the same hook.
+- Decided: images are product-level only (`images` = media ids, `thumbnail_id` defaults to the
+  first); stored as urls, so T07's check is unchanged.
+- Decided: `sales_channels` pass through as sent (none → no channel), same as core.
 
 ## Phase 4 — Catalog config
 
