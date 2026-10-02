@@ -1,36 +1,23 @@
 import { MedusaService } from "@medusajs/framework/utils"
 import MediaAsset from "./models/media-asset"
-
-export type MediaModuleOptions = {
-  max_file_size?: number
-  allowed_mime_types?: string[]
-}
-
-export const DEFAULT_MAX_FILE_SIZE = 5 * 1024 * 1024
-
-export const DEFAULT_ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-]
+import {
+  MediaModuleOptions,
+  ResolvedMediaModuleOptions,
+  resolveMediaModuleOptions,
+} from "./utils/options"
 
 class MediaModuleService extends MedusaService({
   MediaAsset,
 }) {
-  protected readonly options_: Required<MediaModuleOptions>
+  protected readonly options_: ResolvedMediaModuleOptions
 
-  constructor(container: Record<string, unknown>, options: MediaModuleOptions = {}) {
+  constructor(container: Record<string, unknown>, options?: MediaModuleOptions) {
     super(container, options)
 
-    this.options_ = {
-      max_file_size: options.max_file_size ?? DEFAULT_MAX_FILE_SIZE,
-      allowed_mime_types: options.allowed_mime_types ?? DEFAULT_ALLOWED_MIME_TYPES,
-    }
+    this.options_ = resolveMediaModuleOptions(options)
   }
 
-  async getOptions(): Promise<Required<MediaModuleOptions>> {
+  async getOptions(): Promise<ResolvedMediaModuleOptions> {
     return this.options_
   }
 }

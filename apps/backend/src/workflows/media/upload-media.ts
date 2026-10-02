@@ -22,10 +22,11 @@ export const uploadMediaWorkflow = createWorkflow(
   "upload-media",
   function (input: UploadMediaWorkflowInput) {
     const filesToValidate = transform({ input }, ({ input }) =>
-      input.files.map(({ filename, mime_type, size }) => ({
+      input.files.map(({ filename, mime_type, size, content }) => ({
         filename,
         mime_type,
         size,
+        content,
       }))
     )
 
