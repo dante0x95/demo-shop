@@ -7,6 +7,12 @@ export const DRIVER_INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 export const DRIVER_INVITE_NOTIFICATION_CHANNEL = "email"
 export const DRIVER_INVITE_NOTIFICATION_TEMPLATE = "driver-invite"
 
+// Serializes accepting and resending one driver's invitation.
+export const driverInviteLockKey = (driverId: string) =>
+  `driver-invite:${driverId}`
+export const DRIVER_INVITE_LOCK_TIMEOUT_SECONDS = 10
+export const DRIVER_INVITE_LOCK_TTL_SECONDS = 30
+
 export const generateDriverInviteToken = () => randomBytes(32).toString("hex")
 
 // Invites store only this hash, so a leaked table can't be used to accept them.

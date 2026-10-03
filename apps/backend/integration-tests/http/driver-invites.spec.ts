@@ -19,6 +19,14 @@ const EMAIL = "ana@test.com"
 const PASSWORD = "chosen-secret"
 const DAY_MS = 24 * 60 * 60 * 1000
 
+const deferred = () => {
+  let resolve!: () => void
+  const promise = new Promise<void>((r) => {
+    resolve = r
+  })
+  return { promise, resolve }
+}
+
 const PENDING_INVITE_MESSAGE =
   "This email has a pending driver invitation. Check your email for the invitation link to set your password."
 
@@ -359,6 +367,100 @@ medusaIntegrationTestRunner({
 
         const fresh = await accept({ token: secondToken, password: PASSWORD })
         expect(fresh.status).toBe(200)
+        expect((await login()).status).toBe(200)
+      })
+
+      it("does not let a link replaced mid-acceptance create the login", async () => {
+        const driver = await createDriverAsAdmin()
+        const oldToken = await latestToken()
+
+        // Pause the resend right before it rotates the token, while it holds
+        // the invitation lock.
+        const service = driverService()
+        const update = service.updateDriverInvites.bind(service)
+        const rotationReached = deferred()
+        const resumeRotation = deferred()
+        const spy = jest
+          .spyOn(service, "updateDriverInvites")
+          .mockImplementation((async (data: any) => {
+            if (data?.token_hash) {
+              rotationReached.resolve()
+              await resumeRotation.promise
+            }
+            return update(data)
+          }) as any)
+
+        try {
+          const resendReq = resend(driver.id)
+          await rotationReached.promise
+
+          // The old token is still valid here; acceptance must wait for the
+          // resend and then see the token as replaced.
+          const acceptReq = accept({ token: oldToken, password: "old-link" })
+          await new Promise((r) => setTimeout(r, 500))
+          resumeRotation.resolve()
+
+          const [resendRes, acceptRes] = await Promise.all([
+            resendReq,
+            acceptReq,
+          ])
+
+          expect(resendRes.status).toBe(200)
+          expect(acceptRes.status).toBe(400)
+          expect(acceptRes.data.message).toBe(
+            "This invitation link is invalid. Ask for a new invitation."
+          )
+        } finally {
+          spy.mockRestore()
+        }
+
+        expect((await login(EMAIL, "old-link")).status).not.toBe(200)
+        const fresh = await accept({
+          token: await latestToken(),
+          password: PASSWORD,
+        })
+        expect(fresh.status).toBe(200)
+        expect((await login()).status).toBe(200)
+      })
+
+      it("refuses a resend that overlaps an acceptance in progress", async () => {
+        const driver = await createDriverAsAdmin()
+        const token = await latestToken()
+
+        // Pause the acceptance while it creates the login (lock held).
+        const auth = getContainer().resolve(Modules.AUTH)
+        const register = auth.register.bind(auth)
+        const registerReached = deferred()
+        const resumeRegister = deferred()
+        const spy = jest
+          .spyOn(auth, "register")
+          .mockImplementation((async (...args: any[]) => {
+            registerReached.resolve()
+            await resumeRegister.promise
+            return (register as any)(...args)
+          }) as any)
+
+        try {
+          const acceptReq = accept({ token, password: PASSWORD })
+          await registerReached.promise
+
+          const resendReq = resend(driver.id)
+          await new Promise((r) => setTimeout(r, 500))
+          resumeRegister.resolve()
+
+          const [acceptRes, resendRes] = await Promise.all([
+            acceptReq,
+            resendReq,
+          ])
+
+          expect(acceptRes.status).toBe(200)
+          expect(resendRes.status).toBe(400)
+          expect(resendRes.data.message).toBe("This driver already has a login")
+        } finally {
+          spy.mockRestore()
+        }
+
+        expect(await inviteNotifications()).toHaveLength(1)
         expect((await login()).status).toBe(200)
       })
 

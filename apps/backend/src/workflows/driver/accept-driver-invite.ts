@@ -1,4 +1,8 @@
-import { setAuthAppMetadataStep } from "@medusajs/medusa/core-flows"
+import {
+  acquireLockStep,
+  releaseLockStep,
+  setAuthAppMetadataStep,
+} from "@medusajs/medusa/core-flows"
 import {
   createWorkflow,
   transform,
@@ -7,6 +11,11 @@ import {
 import { markDriverInviteAcceptedStep } from "./steps/mark-driver-invite-accepted"
 import { setDriverPasswordStep } from "./steps/set-driver-password"
 import { validateDriverInviteTokenStep } from "./steps/validate-driver-invite-token"
+import {
+  DRIVER_INVITE_LOCK_TIMEOUT_SECONDS,
+  DRIVER_INVITE_LOCK_TTL_SECONDS,
+  driverInviteLockKey,
+} from "./utils/driver-invite"
 
 export type AcceptDriverInviteWorkflowInput = {
   token: string
@@ -19,7 +28,28 @@ export type AcceptDriverInviteWorkflowInput = {
 export const acceptDriverInviteWorkflow = createWorkflow(
   "accept-driver-invite",
   function (input: AcceptDriverInviteWorkflowInput) {
-    const invite = validateDriverInviteTokenStep({ token: input.token })
+    // Finds the driver behind the token, so its invitation can be locked.
+    const found = validateDriverInviteTokenStep({ token: input.token })
+
+    const lockKey = transform({ found }, ({ found }) =>
+      driverInviteLockKey(found.driver.id)
+    )
+
+    // Resend takes the same lock, so a link can't be replaced while it is
+    // being accepted.
+    acquireLockStep({
+      key: lockKey,
+      timeout: DRIVER_INVITE_LOCK_TIMEOUT_SECONDS,
+      ttl: DRIVER_INVITE_LOCK_TTL_SECONDS,
+    })
+
+    // Checked again under the lock: a resend or another acceptance may have
+    // finished while this request waited.
+    const invite = validateDriverInviteTokenStep({ token: input.token }).config(
+      { name: "revalidate-driver-invite-token" }
+    )
+
+    markDriverInviteAcceptedStep({ id: invite.invite_id })
 
     const passwordInput = transform({ input, invite }, ({ input, invite }) => ({
       email: invite.driver.email,
@@ -34,7 +64,7 @@ export const acceptDriverInviteWorkflow = createWorkflow(
       value: invite.driver.id,
     })
 
-    markDriverInviteAcceptedStep({ id: invite.invite_id })
+    releaseLockStep({ key: lockKey })
 
     const driver = transform({ invite }, ({ invite }) => invite.driver)
 
