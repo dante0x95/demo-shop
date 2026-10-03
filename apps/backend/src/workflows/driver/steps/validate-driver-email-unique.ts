@@ -1,17 +1,11 @@
-import { MedusaError } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { DRIVER_MODULE } from "../../../modules/driver"
 import DriverModuleService from "../../../modules/driver/service"
+import { driverEmailExistsError } from "../utils/driver-email-conflict"
 
 export type ValidateDriverEmailUniqueStepInput = {
   email: string
 }
-
-export const driverEmailExistsError = () =>
-  new MedusaError(
-    MedusaError.Types.INVALID_DATA,
-    "A driver with this email already exists"
-  )
 
 // Early, friendly check. The unique index on email is what actually enforces
 // uniqueness when requests race; see createDriverStep.

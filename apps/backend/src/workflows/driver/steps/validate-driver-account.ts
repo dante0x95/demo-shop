@@ -2,7 +2,7 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { DRIVER_MODULE } from "../../../modules/driver"
 import DriverModuleService from "../../../modules/driver/service"
-import { driverEmailExistsError } from "./validate-driver-email-unique"
+import { driverEmailExistsError } from "../utils/driver-email-conflict"
 
 export type ValidateDriverAccountStepInput = {
   auth_identity: {

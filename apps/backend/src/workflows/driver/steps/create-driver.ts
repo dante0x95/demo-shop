@@ -2,7 +2,7 @@ import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { DRIVER_MODULE } from "../../../modules/driver"
 import { DRIVER_VEHICLE_TYPES } from "../../../modules/driver/models/driver"
 import DriverModuleService from "../../../modules/driver/service"
-import { driverEmailExistsError } from "./validate-driver-email-unique"
+import { driverEmailExistsError } from "../utils/driver-email-conflict"
 
 export type CreateDriverStepInput = {
   first_name: string
