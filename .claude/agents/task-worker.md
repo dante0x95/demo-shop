@@ -38,4 +38,6 @@ Follow .claude/skills/next-task/SKILL.md and .claude/rules/agent-workflow.md, wi
 4. Final report, short: task ID, PR link, one line per Codex round (verdict + link to its report
    comment), one line for Copilot (findings count). Details only for findings: what Codex or
    Copilot found and what you fixed (commit) or rejected (why); confirm no comment is left
-   unanswered. Then any assumptions Dante must confirm and any permission denials.
+   unanswered. Then the unit-test report from `.claude/rules/unit-tests.md` (behaviors tested,
+   edge/error cases, what could not be tested and why, command and result), any assumptions
+   Dante must confirm and any permission denials.

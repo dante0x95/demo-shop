@@ -13,8 +13,10 @@ Wait for my "go". Ask about business rules; never guess them.
 ## Definition of Done (all must pass locally)
 1. `npx tsc --noEmit`
 2. `npm run build`
-3. `npm run test:integration:http`: per endpoint, test the happy path, 400 validation, 404, and 401.
-4. `npm run test:integration:modules`: for services with custom logic.
+3. `npm run test:unit`: unit tests for new or changed code, following
+   `.claude/rules/unit-tests.md`.
+4. `npm run test:integration:http`: per endpoint, test the happy path, 400 validation, 404, and 401.
+5. `npm run test:integration:modules`: for services with custom logic.
 Never skip tests, use `.only`, or weaken an assertion to make it pass.
 
 ## Git workflow

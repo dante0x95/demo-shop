@@ -255,6 +255,10 @@ Passing tests are not sufficient by themselves.
 
 Review whether tests cover the behavior introduced or changed by the PR.
 
+Unit tests are part of the Definition of Done for new or changed code that runs without a
+database or server. Check them against `.claude/rules/unit-tests.md`: missing unit tests for such
+logic, or tests that could not detect a plausible defect, are findings.
+
 Depending on the feature, consider:
 
 - happy path
