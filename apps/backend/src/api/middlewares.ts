@@ -3,6 +3,7 @@ import {
   adminBrandRoutesMiddlewares,
   adminProductBrandMiddlewares,
 } from './admin/brands/middlewares'
+import { adminDriverRoutesMiddlewares } from './admin/drivers/middlewares'
 import { adminMediaRoutesMiddlewares } from './admin/media/middlewares'
 import { adminMetafieldDefinitionRoutesMiddlewares } from './admin/metafield-definitions/middlewares'
 import { adminOrderRoutesMiddlewares } from './admin/orders/middlewares'
@@ -16,6 +17,7 @@ import { storeBrandRoutesMiddlewares } from './store/brands/middlewares'
 export default defineMiddlewares({
   routes: [
     ...adminBrandRoutesMiddlewares,
+    ...adminDriverRoutesMiddlewares,
     ...adminMediaRoutesMiddlewares,
     ...adminMetafieldDefinitionRoutesMiddlewares,
     ...adminOrderRoutesMiddlewares,

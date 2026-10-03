@@ -2,6 +2,7 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { DRIVER_MODULE } from "../../../modules/driver"
 import DriverModuleService from "../../../modules/driver/service"
+import { driverEmailExistsError } from "../utils/driver-email-conflict"
 
 export type ValidateDriverAccountStepInput = {
   auth_identity: {
@@ -47,8 +48,9 @@ export const validateDriverAccountStep = createStep(
       { select: ["id"], take: 1 }
     )
 
+    // An admin may have created a driver with this email (POST /admin/drivers).
     if (existing) {
-      throw driverAccountExistsError()
+      throw driverEmailExistsError()
     }
 
     return new StepResponse(email)

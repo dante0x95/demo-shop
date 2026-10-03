@@ -2,7 +2,7 @@ import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { DRIVER_MODULE } from "../../../modules/driver"
 import { DRIVER_VEHICLE_TYPES } from "../../../modules/driver/models/driver"
 import DriverModuleService from "../../../modules/driver/service"
-import { driverAccountExistsError } from "./validate-driver-account"
+import { driverEmailExistsError } from "../utils/driver-email-conflict"
 
 export type CreateDriverStepInput = {
   first_name: string
@@ -26,14 +26,14 @@ export const createDriverStep = createStep(
 
       return new StepResponse(driver, driver.id)
     } catch (error) {
-      // A concurrent registration may have inserted the same email after
-      // validateDriverAccountStep ran; the unique index rejects this insert.
+      // A concurrent request may have inserted the same email after the
+      // workflow's early email check ran; the unique index rejects this insert.
       const [existing] = await driverModuleService.listDrivers(
         { email: input.email },
         { select: ["id"], take: 1 }
       )
 
-      throw existing ? driverAccountExistsError() : error
+      throw existing ? driverEmailExistsError() : error
     }
   },
   async (id, { container }) => {
