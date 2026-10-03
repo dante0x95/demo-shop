@@ -6,6 +6,7 @@ import {
 import { adminMediaRoutesMiddlewares } from './admin/media/middlewares'
 import { adminMetafieldDefinitionRoutesMiddlewares } from './admin/metafield-definitions/middlewares'
 import { adminOrderRoutesMiddlewares } from './admin/orders/middlewares'
+import { adminPackagePresetRoutesMiddlewares } from './admin/package-presets/middlewares'
 import { adminProductFullRoutesMiddlewares } from './admin/products/full/middlewares'
 import { driverRoutesMiddlewares } from './drivers/middlewares'
 import { storeBrandRoutesMiddlewares } from './store/brands/middlewares'
@@ -18,6 +19,7 @@ export default defineMiddlewares({
     ...adminMediaRoutesMiddlewares,
     ...adminMetafieldDefinitionRoutesMiddlewares,
     ...adminOrderRoutesMiddlewares,
+    ...adminPackagePresetRoutesMiddlewares,
     ...adminProductBrandMiddlewares,
     ...adminProductFullRoutesMiddlewares,
     ...driverRoutesMiddlewares,

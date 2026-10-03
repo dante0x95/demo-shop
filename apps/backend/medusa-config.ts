@@ -38,5 +38,8 @@ module.exports = defineConfig({
     {
       resolve: './src/modules/metafield',
     },
+    {
+      resolve: './src/modules/package-preset',
+    },
   ],
 })
