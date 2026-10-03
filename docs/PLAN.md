@@ -14,9 +14,9 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T14, T17, T19.
+Free right now: T18, T19.
 Blocked outside this backlog: T07.1 (custom admin phase).
-T17 unblocks T18, so `/next-task` picks T17 first.
+T19 has open ❓ (one plugin or several, where to publish), so `/next-task` picks T18 until they are answered.
 
 Files several tasks touch (see the rules file for how to resolve a conflict):
 
@@ -172,7 +172,7 @@ Deps: T12
   later `/drivers/me/*` tasks decide their own gating for inactive drivers.
 - Decided: a valid token whose driver no longer exists (soft-deleted) → 404.
 
-### [ ] T14 · GET/POST /admin/drivers
+### [x] T14 · GET/POST /admin/drivers
 Deps: T12
 - Paginated list + create.
 
@@ -194,7 +194,7 @@ Deps: T13, T15
 - Only the authenticated driver's orders; paginated; filter by delivery status.
 - Test: driver A never sees driver B's orders.
 
-### [ ] T17 · POST /drivers/me/orders/:id/delivered
+### [x] T17 · POST /drivers/me/orders/:id/delivered
 Deps: T16 · Ships: `confirm-delivery` (part 1)
 - Marks the fulfillment as delivered (core flow).
 - Order not assigned to this driver → 404 (don't leak existence). Idempotent.

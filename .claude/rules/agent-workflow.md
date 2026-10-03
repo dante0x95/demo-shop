@@ -52,9 +52,11 @@ Never skip tests, use `.only`, or weaken an assertion to make it pass.
   `medusa develop` (port 9000); only one session runs each at a time.
 
 ## PR template
-### What
-### Why (pendientes.md item)
-### How (workflows, core flows reused)
-### Tests (output summary)
-### Migrations (none | names)
-### Risks / follow-ups
+Only these two sections, kept short. No implementation details, file lists, plans, test output
+or risk lists: the diff and CI carry those.
+### Business value
+1-3 sentences (task ID first): what the shop, admin, driver or customer can do now, and why it
+matters.
+### How to test
+Numbered steps to try the feature by hand: the request (method, path, auth, sample body) and the
+expected result. Include the main error cases only when they are part of the feature.

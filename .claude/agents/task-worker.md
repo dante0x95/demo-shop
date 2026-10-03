@@ -6,7 +6,8 @@ background: true
 ---
 Follow .claude/skills/next-task/SKILL.md and .claude/rules/agent-workflow.md, with these overrides:
 
-1. No plan gate. Do NOT enter plan mode or wait for "go". Write your plan in the PR's "How" section.
+1. No plan gate. Do NOT enter plan mode or wait for "go". Keep the plan out of the PR: the PR
+   description follows the template in agent-workflow.md (business value + how to test only).
 2. Never guess business rules. If the task has an unanswered ❓ in docs/PLAN.md, release the claim
    (git update-ref -d refs/claims/<task-id>), remove your board line, and report it as blocked.
 3. Review loop (max 3 rounds). For round N = 1, 2, 3:
@@ -26,5 +27,6 @@ Follow .claude/skills/next-task/SKILL.md and .claude/rules/agent-workflow.md, wi
       gh api repos/{owner}/{repo}/pulls/<n>/comments
    e. Fix the valid blockers as new commits, re-run the Definition of Done, push, and reply to each
       comment: fixed (with commit) or rejected (with reason).
-4. Final report: task ID, PR link, links to the Codex report comments, Codex findings and what
-   you fixed or rejected (and why).
+4. Final report, short: task ID, PR link, one line per Codex round (verdict + link to its report
+   comment). Details only for findings: what Codex found and what you fixed (commit) or rejected
+   (why). Then any assumptions Dante must confirm and any permission denials.

@@ -23,7 +23,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Workflows
 - [x] create-product-full: producto + variantes + inventario por ubicación + marca · T08
 - [x] assign-driver: asignar repartidor a un pedido · T15
-- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T18 · T17 libre, T18 tras T17
+- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T18 · T17 hecho, T18 libre
 
 ## Endpoints Admin
 - [x] GET/POST /admin/brands
@@ -34,7 +34,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] DELETE /admin/media/:id · T07
 - [x] GET/POST/DELETE /admin/metafield-definitions · T09
 - [x] GET/POST/DELETE /admin/package-presets · T10
-- [ ] GET/POST /admin/drivers · T14 · libre
+- [x] GET/POST /admin/drivers · T14
 - [x] POST /admin/orders/:id/assign-driver · T15
 
 ## Admin UI (panel de Medusa, temporal)
@@ -45,8 +45,8 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] POST /drivers (registro, junto con /auth/driver/emailpass/register)
 - [x] GET /drivers/me · T13
 - [x] GET /drivers/me/orders · T16
-- [ ] POST /drivers/me/orders/:id/delivered · T17 · libre
-- [ ] POST /drivers/me/orders/:id/collect-payment · T18 · tras T17
+- [x] POST /drivers/me/orders/:id/delivered · T17
+- [ ] POST /drivers/me/orders/:id/collect-payment · T18 · libre
 
 ## Endpoints Store (storefront + agente de WhatsApp)
 - [x] GET /store/brands

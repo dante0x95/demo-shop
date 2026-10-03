@@ -334,34 +334,27 @@ For each blocking finding include:
 
 ### Merge readiness
 
-End every PR review with:
+End every PR review with a short report. Details are only for findings; when there is nothing
+to report, summarize your work in a few lines.
 
-## Verification Performed
+No findings:
 
-List the commands and checks actually executed.
+```
+**READY TO MERGE** · Confidence: High | Medium | Low
+2-4 lines: what you checked (commands run and their result, key behaviors verified) and, if
+confidence is not High, what could not be verified.
+```
 
-## Findings
+With findings:
 
-List concrete findings, separating blockers from non-blocking observations.
-
-## Test Coverage
-
-Summarize:
-
-- relevant existing tests
-- tests added or changed by the PR
-- tests executed during review
-- important scenarios that remain unverified
-
-## Merge Readiness
-
-Use exactly one of:
-
-**READY TO MERGE**
-
-or
-
-**NOT READY TO MERGE**
+```
+**READY TO MERGE** | **NOT READY TO MERGE** · Confidence: High | Medium | Low
+#### Findings
+Blockers first, each with the fields listed under "Findings" above. Non-blocking and out-of-scope
+findings: 1-2 lines each.
+#### Verification
+1-3 lines: commands run and their result; important scenarios left unverified.
+```
 
 A PR is READY TO MERGE when:
 
@@ -385,17 +378,7 @@ A PR is NOT READY TO MERGE when a confirmed blocker remains, such as:
 - broken authentication or authorization
 - required build/type/lint failure
 
-If the PR is NOT READY TO MERGE, list the exact blockers that must be resolved.
-
-## Confidence
-
-Report:
-
-- High
-- Medium
-- Low
-
-Briefly explain what was actually verified and what could not be verified.
+Missing test coverage for important behavior is a finding, not a section of its own.
 
 ### GitHub PR comments
 
@@ -413,8 +396,7 @@ findings:
 
 - Post it once per review round with `gh pr comment <pr-number> --body-file <file>`.
 - Start the body with `## Codex review · round <N>` (N = the round you were given, else 1),
-  followed by the commit SHA you reviewed, then the full report from "Merge readiness"
-  (Verification Performed, Findings, Test Coverage, Merge Readiness, Confidence).
+  followed by the commit SHA you reviewed, then the report from "Merge readiness".
 - Inline comments for concrete findings are still posted as above; the report comment does not
   replace them.
 - If posting fails, say so at the top of the report you return, with the error.
