@@ -7,10 +7,6 @@ import { createSelectParams } from "@medusajs/medusa/api/utils/validators"
 
 export const AdminGetProductFullParams = createSelectParams()
 
-export type AdminGetProductFullParamsType = z.infer<
-  typeof AdminGetProductFullParams
->
-
 const ProductFullStock = z.strictObject({
   location_id: z.string().trim().min(1),
   quantity: z.number().int().min(0),

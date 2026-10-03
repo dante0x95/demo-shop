@@ -59,8 +59,13 @@ export const adminBrandRoutesMiddlewares: MiddlewareRoute[] = [
       ),
     ],
   },
-  // Core product creation accepts the brand; the `productsCreated` hook
-  // (src/workflows/brand/hooks/products-created.ts) links it.
+]
+
+// Core product creation accepts the brand; the `productsCreated` hook
+// (src/workflows/brand/hooks/products-created.ts) links it. Kept with the
+// brand routes rather than under admin/products because it is brand code and
+// moves with the brand module when it becomes a plugin.
+export const adminProductBrandMiddlewares: MiddlewareRoute[] = [
   {
     method: ["POST"],
     matcher: "/admin/products",
