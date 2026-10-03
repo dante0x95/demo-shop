@@ -127,6 +127,9 @@ const DriversPage = () => {
     ]
   }, [prompt, resendInvite])
 
+  const resetPage = () =>
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+
   const table = useDataTable({
     data: data?.drivers ?? [],
     columns,
@@ -150,7 +153,7 @@ const DriversPage = () => {
               value={status}
               onValueChange={(value) => {
                 setStatus(value as DriverStatusFilter)
-                setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+                resetPage()
               }}
             >
               <Select.Trigger aria-label="Status" className="w-[140px]">
@@ -164,7 +167,8 @@ const DriversPage = () => {
                 ))}
               </Select.Content>
             </Select>
-            <CreateDriverModal />
+            {/* Newest first: the new driver is on the first page. */}
+            <CreateDriverModal onCreated={resetPage} />
           </div>
         </DataTable.Toolbar>
         {isError ? (

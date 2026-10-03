@@ -77,7 +77,9 @@ const openRowMenu = async (page: Page, text: string) => {
 }
 
 const openCreateModal = async (page: Page) => {
-  await page.goto("/app/drivers")
+  if (!page.url().endsWith("/app/drivers")) {
+    await page.goto("/app/drivers")
+  }
   await page.getByRole("button", { name: "Create driver" }).click()
   const modal = page.getByRole("dialog")
   await expect(modal.getByRole("heading", { name: "Create driver" })).toBeVisible()
@@ -202,6 +204,32 @@ test.describe("Admin drivers page", () => {
     const row = rowFor(page, email)
     await expect(row).toContainText("XYZ 987")
     await expect(row).toContainText("Inactive")
+  })
+
+  test("shows the new driver on page 1 when created from a later page", async ({
+    page,
+  }) => {
+    // 21 drivers so the list has a second page.
+    for (let i = 0; i < 21; i++) {
+      await createViaApi(page.request, {})
+    }
+
+    await page.goto("/app/drivers")
+    await page.getByRole("button", { name: "Next" }).click()
+    await expect(page.getByRole("button", { name: "Prev" })).toBeEnabled()
+
+    const email = uniqueEmail("from-page-2")
+    const modal = await openCreateModal(page)
+    await modal.getByLabel("First name").fill("Paula")
+    await modal.getByLabel("Last name").fill("Second")
+    await modal.getByLabel("Email").fill(email)
+    await modal.getByLabel("Phone").fill("5522222222")
+    await pickOption(page, "Vehicle type", "Car")
+    await modal.getByRole("button", { name: "Save" }).click()
+
+    await expect(modal).toBeHidden()
+    await expect(page.getByRole("button", { name: "Prev" })).toBeDisabled()
+    await expect(page.getByRole("row").nth(1)).toContainText(email)
   })
 
   test("shows the API error for missing fields", async ({ page }) => {

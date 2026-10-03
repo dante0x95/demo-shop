@@ -41,7 +41,13 @@ const TEXT_FIELDS = [
   { field: "phone", label: "Phone", type: "tel" },
 ] as const
 
-export const CreateDriverModal = () => {
+type CreateDriverModalProps = {
+  // Called after the driver is created, e.g. to show the first page, where
+  // the newest driver is listed.
+  onCreated?: () => void
+}
+
+export const CreateDriverModal = ({ onCreated }: CreateDriverModalProps) => {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<CreateDriverFormState>(initialState)
   const [error, setError] = useState<string | null>(null)
@@ -55,6 +61,7 @@ export const CreateDriverModal = () => {
         `Driver "${formatDriverName(driver)}" created. Invitation sent to ${driver.email}`
       )
       handleOpenChange(false)
+      onCreated?.()
     },
     onError: (err: Error) => {
       setError(err.message || "Failed to create driver")
