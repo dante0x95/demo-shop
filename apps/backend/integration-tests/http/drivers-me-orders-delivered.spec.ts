@@ -146,6 +146,17 @@ medusaIntegrationTestRunner({
       return Number(data[0].items?.[0]?.detail?.delivered_quantity ?? 0)
     }
 
+    const getDriverId = async (orderId: string) => {
+      const { data } = await getContainer()
+        .resolve(ContainerRegistrationKeys.QUERY)
+        .graph({
+          entity: "order",
+          fields: ["driver.id"],
+          filters: { id: orderId },
+        })
+      return data[0].driver?.id
+    }
+
     describe("POST /drivers/me/orders/:id/delivered", () => {
       it("marks the order's fulfillment as delivered", async () => {
         const { order, headers } = await setup()
@@ -222,6 +233,64 @@ medusaIntegrationTestRunner({
 
         expect(results.map((res) => res.status)).toEqual([200, 200])
         expect(await getDeliveredQuantity(order.id)).toBe(2)
+      })
+
+      // A confirmation holds the order lock from its ownership check to the
+      // delivery, so a reassignment can't slip in between.
+      it("makes a reassignment wait for a confirmation in progress", async () => {
+        const { order, driver, headers } = await setup("a@test.com")
+        await createFulfillment(order, { shipped: true })
+        const b = await createActiveDriver("b@test.com")
+        const locking = getContainer().resolve(Modules.LOCKING)
+
+        // Stands in for a confirmation that already passed its ownership check.
+        await locking.acquire(order.id, { expire: 10 })
+        const reassign = api
+          .post(
+            `/admin/orders/${order.id}/assign-driver`,
+            { driver_id: b.driver.id },
+            adminHeaders
+          )
+          .catch((e) => e.response)
+        await new Promise((resolve) => setTimeout(resolve, 700))
+        expect(await getDriverId(order.id)).toBe(driver.id)
+        await locking.release(order.id)
+
+        expect((await reassign).status).toBe(200)
+        expect(await getDriverId(order.id)).toBe(b.driver.id)
+        expect((await confirm(order.id, headers)).status).toBe(404)
+        expect(await getDeliveredQuantity(order.id)).toBe(0)
+      })
+
+      it("never delivers for a driver who lost the order in a race", async () => {
+        const { order, driver, headers } = await setup("a@test.com")
+        await createFulfillment(order, { shipped: true })
+        const b = await createActiveDriver("b@test.com")
+
+        const [delivered, reassigned] = await Promise.all([
+          confirm(order.id, headers),
+          api
+            .post(
+              `/admin/orders/${order.id}/assign-driver`,
+              { driver_id: b.driver.id },
+              adminHeaders
+            )
+            .catch((e) => e.response),
+        ])
+
+        // Whichever runs first wins; the other sees its result.
+        const driverId = await getDriverId(order.id)
+        const quantity = await getDeliveredQuantity(order.id)
+        if (delivered.status === 200) {
+          expect(reassigned.status).toBe(400)
+          expect(driverId).toBe(driver.id)
+          expect(quantity).toBe(2)
+        } else {
+          expect(delivered.status).toBe(404)
+          expect(reassigned.status).toBe(200)
+          expect(driverId).toBe(b.driver.id)
+          expect(quantity).toBe(0)
+        }
       })
 
       it("returns 200 for an order an admin already marked delivered", async () => {

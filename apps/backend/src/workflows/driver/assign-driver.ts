@@ -6,8 +6,10 @@ import {
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
 import {
+  acquireLockStep,
   createRemoteLinkStep,
   dismissRemoteLinkStep,
+  releaseLockStep,
   useQueryGraphStep,
 } from "@medusajs/medusa/core-flows"
 import { DRIVER_MODULE } from "../../modules/driver"
@@ -26,6 +28,11 @@ const orderDriverLink = (orderId: string, driverId: string): LinkDefinition => (
 export const assignDriverWorkflow = createWorkflow(
   "assign-driver",
   function (input: AssignDriverWorkflowInput) {
+    // Same order lock as confirm-delivery: a driver confirming a delivery
+    // must not see the order change hands between its ownership check and
+    // the delivery, and a reassignment must see a delivery that just landed.
+    acquireLockStep({ key: input.order_id, timeout: 2, ttl: 10 })
+
     // Unknown order -> 404.
     const { data: order } = useQueryGraphStep({
       entity: "order",
@@ -63,6 +70,8 @@ export const assignDriverWorkflow = createWorkflow(
 
     dismissRemoteLinkStep(transform({ links }, ({ links }) => links.dismiss))
     createRemoteLinkStep(transform({ links }, ({ links }) => links.create))
+
+    releaseLockStep({ key: input.order_id })
 
     return new WorkflowResponse({
       order_id: input.order_id,
