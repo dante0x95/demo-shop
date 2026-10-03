@@ -4,8 +4,16 @@ import {
   validateAndTransformBody,
   validateAndTransformQuery,
 } from "@medusajs/framework/http"
-import { retrieveDriverTransformQueryConfig } from "./query-config"
-import { CreateDriver, GetDriverMeParams, GetDriverParams } from "./validators"
+import {
+  listDriverOrdersTransformQueryConfig,
+  retrieveDriverTransformQueryConfig,
+} from "./query-config"
+import {
+  CreateDriver,
+  GetDriverMeParams,
+  GetDriverOrdersParams,
+  GetDriverParams,
+} from "./validators"
 
 export const driverRoutesMiddlewares: MiddlewareRoute[] = [
   {
@@ -36,6 +44,16 @@ export const driverRoutesMiddlewares: MiddlewareRoute[] = [
       validateAndTransformQuery(
         GetDriverMeParams,
         retrieveDriverTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    method: ["GET"],
+    matcher: "/drivers/me/orders",
+    middlewares: [
+      validateAndTransformQuery(
+        GetDriverOrdersParams,
+        listDriverOrdersTransformQueryConfig
       ),
     ],
   },
