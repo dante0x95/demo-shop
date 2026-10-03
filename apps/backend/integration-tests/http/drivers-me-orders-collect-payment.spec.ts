@@ -94,7 +94,12 @@ medusaIntegrationTestRunner({
           data: {},
         }
       )
-      return await paymentModuleService.authorizePaymentSession(session.id, {})
+      const payment = await paymentModuleService.authorizePaymentSession(
+        session.id,
+        {}
+      )
+      expect(payment).toBeTruthy()
+      return payment!
     }
 
     const createFulfillment = async (
