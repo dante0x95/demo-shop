@@ -46,6 +46,14 @@ export type ConfirmDriverOrderDeliveryType = z.infer<
   typeof ConfirmDriverOrderDelivery
 >
 
+// Nothing to send: the driver collects the full amount of the order's cash on
+// delivery payment.
+export const CollectDriverOrderPayment = z.strictObject({})
+
+export type CollectDriverOrderPaymentType = z.infer<
+  typeof CollectDriverOrderPayment
+>
+
 // email comes from the auth identity and is_active is set by admins, so
 // neither is accepted here.
 export const CreateDriver = z.strictObject({
