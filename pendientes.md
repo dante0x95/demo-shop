@@ -15,15 +15,17 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] metafield: definiciones de campos personalizados
 - [x] package-preset: cajas/paquetes predefinidos · T10
 - [x] driver: repartidores (actor type propio)
+- [x] seo: título y meta descripción por producto (product_seo_override) · T22
 
 ## Links
 - [x] product ↔ brand
 - [x] order ↔ driver · T15
+- [x] product → product_seo_override (link de solo lectura) · T22
 
 ## Workflows
 - [x] create-product-full: producto + variantes + inventario por ubicación + marca · T08
 - [x] assign-driver: asignar repartidor a un pedido · T15
-- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T17.1 + T18 · T17 y T17.1 hechos, T18 libre
+- [x] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T17.1 + T18
 
 ## Endpoints Admin
 - [x] GET/POST /admin/brands
@@ -34,6 +36,8 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] DELETE /admin/media/:id · T07
 - [x] GET/POST/DELETE /admin/metafield-definitions · T09
 - [x] GET/POST/DELETE /admin/package-presets · T10
+- [x] POST /admin/package-presets/:id/set-default · T27
+- [x] GET/POST /admin/products/:id/seo · T22
 - [x] GET/POST /admin/drivers · T14
 - [x] Invitación de repartidores creados desde el admin (email + reenviar) · T14.1
 - [ ] Invitación: decisiones pendientes (contraseña de un login compartido, invitación vencida, códigos de error, lock con varios servidores) · T14.2 · espera ❓
@@ -42,7 +46,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Paridad con el formulario de producto de Shopify
 - [ ] Valores de metafields por producto · T20 · libre
 - [ ] Precio de comparación (compare-at) y costo por artículo · T21 · libre
-- [ ] SEO: título de página y meta descripción · T22 · libre
+- [x] SEO: título de página y meta descripción · T22
 - [ ] Paquete predefinido por producto · T23 · libre
 
 ## Admin UI (panel de Medusa, temporal)
@@ -52,10 +56,10 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [ ] Pedido: widget para asignar repartidor + estado de entrega · T25 · libre
 - [x] Biblioteca de medios: explorar + subir + eliminar · T26
 - [ ] Biblioteca de medios: filtro solo con los tipos permitidos + miniaturas en e2e · T26.1 · libre
-- [ ] Paquetes predefinidos: página de ajustes · T27 · libre
+- [x] Paquetes predefinidos: página de ajustes · T27
 - [ ] Metafields: definiciones + valores en el producto · T28 · tras T20
-- [ ] Producto: widgets de compare-at, costo, SEO y paquete · T29 · tras T21 + T22 + T23
-- [ ] Página "Agregar producto" estilo Shopify · T30 · tras T08 + T20-T23 + T26
+- [ ] Producto: widgets de compare-at, costo, SEO y paquete · T29 · tras T21 + T23
+- [ ] Página "Agregar producto" estilo Shopify · T30 · tras T20 + T21 + T23
 
 ## Endpoints Driver (protegidos con authenticate("driver"))
 - [x] POST /drivers (registro, junto con /auth/driver/emailpass/register)
@@ -63,11 +67,12 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] GET /drivers/me/orders · T16
 - [x] POST /drivers/me/orders/:id/delivered · T17
 - [x] Repartidor inactivo no puede confirmar entregas (403) · T17.1
-- [ ] POST /drivers/me/orders/:id/collect-payment · T18 · libre
+- [x] POST /drivers/me/orders/:id/collect-payment · T18
 
 ## Endpoints Store (storefront + agente de WhatsApp)
 - [x] GET /store/brands
 - [x] GET /store/brands/:id/products
+- [x] `seo` resuelto (con fallback) en productos de /store/products y /store/brands/:id/products · T22
 
 ## Middlewares
 - [x] additional_data.brand_id en creación de producto · T08
@@ -81,7 +86,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [ ] Proveedor real de email (hoy: proveedor local de Medusa, desde T14.1) · sin tarea en PLAN
 
 ## Reutilización
-- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T20, T23, T27, T28 (y sus ❓)
+- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T20, T23, T28 (y sus ❓)
 
 ## Fuera del MVP
 - Colecciones automáticas, taxonomía con atributos, publicación programada,

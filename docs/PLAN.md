@@ -14,10 +14,10 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T18, T20, T21, T22, T23 (API) · T24, T25, T26.1, T27 (admin UI, one at a time).
+Free right now: T20, T21, T23 (API) · T24, T25, T26.1 (admin UI, one at a time).
 Blocked outside this backlog: T07.1 (custom admin phase).
-T20-T23 have open ❓ for the plan gate. T14.2 waits on its ❓ (open decisions from T14.1).
-T19 waits on its own ❓ (one plugin or several, where to publish) and on T20, T23, T27, T28.
+T20, T21 and T23 have open ❓ for the plan gate. T14.2 waits on its ❓ (open decisions from T14.1).
+T19 waits on its own ❓ (one plugin or several, where to publish) and on T20, T23, T28.
 
 Files several tasks touch (see the rules file for how to resolve a conflict):
 
@@ -240,7 +240,7 @@ Deps: T17
   for any order id, even one that isn't theirs or doesn't exist.
 - Tests: deactivate after assignment → 403, fulfillment stays undelivered; reactivate → 200.
 
-### [ ] T18 · POST /drivers/me/orders/:id/collect-payment
+### [x] T18 · POST /drivers/me/orders/:id/collect-payment
 Deps: T11, T17, T17.1
 - Captures the manual payment (core `capturePaymentWorkflow`). Only after delivered.
 - Double capture → 409.
@@ -274,12 +274,10 @@ Deps: T08
   price for free) or a stored amount per variant and currency. ❓ Must compare-at be higher
   than the price. ❓ Cost currency (store default only, or per currency).
 
-### [ ] T22 · Product SEO title and meta description
+### [x] T22 · Product SEO title and meta description
 Deps: —
 - Admin sets an SEO page title and meta description per product; the URL slug stays `handle`.
   `/store` product responses expose them so the storefront can render the tags.
-- ❓ Fallback when empty (product title / description). ❓ Length limits (Shopify suggests
-  70 / 320 characters without enforcing them).
 - Decided: SEO title is never empty. If the admin hasn't set one, the product title is used.
   Nothing is stored until the admin edits it, so an unedited SEO title follows later renames of
   the product. Clearing the field (empty or whitespace-only) goes back to the fallback.
@@ -323,9 +321,11 @@ Deps: T26
 - E2E: image previews point at `localhost:9000` while the e2e server runs on 9001, so thumbnails
   don't load in tests. Make file URLs follow the server's port in e2e and assert a thumbnail loads.
 
-### [ ] T27 · Package presets settings page
+### [x] T27 · Package presets settings page
 Deps: T10
 - List, create and delete presets; mark the default.
+- Added `POST /admin/package-presets/:id/set-default` (PR #25): T10's API had no way to make an
+  existing preset the default. No "unset default" action.
 
 ### [ ] T28 · Metafields UI
 Deps: T20
