@@ -58,3 +58,12 @@ export const CreateDriver = z.strictObject({
 })
 
 export type CreateDriverType = z.infer<typeof CreateDriver>
+
+// The token comes from the invitation link; the password becomes the
+// driver's emailpass password.
+export const AcceptDriverInvite = z.strictObject({
+  token: z.string().trim().min(1),
+  password: z.string().min(1),
+})
+
+export type AcceptDriverInviteType = z.infer<typeof AcceptDriverInvite>

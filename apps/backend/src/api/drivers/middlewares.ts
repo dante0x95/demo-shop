@@ -10,6 +10,7 @@ import {
   retrieveDriverTransformQueryConfig,
 } from "./query-config"
 import {
+  AcceptDriverInvite,
   ConfirmDriverOrderDelivery,
   CreateDriver,
   GetDriverMeParams,
@@ -34,6 +35,12 @@ export const driverRoutesMiddlewares: MiddlewareRoute[] = [
         retrieveDriverTransformQueryConfig
       ),
     ],
+  },
+  {
+    // Public: the invitation token in the body is the credential.
+    method: ["POST"],
+    matcher: "/drivers/invites/accept",
+    middlewares: [validateAndTransformBody(AcceptDriverInvite)],
   },
   {
     // Every /drivers/me* route needs a registered driver (actor_id = driver.id).
