@@ -154,9 +154,27 @@ medusaIntegrationTestRunner({
 
       it("blocks self-registration with an admin-created driver's email", async () => {
         await createDriverAsAdmin()
+
+        // The invitation is pending, so sign-up points to it (see T14.1).
+        const registerRes = await api
+          .post("/auth/driver/emailpass/register", {
+            email: "ana@test.com",
+            password: "supersecret",
+          })
+          .catch((e) => e.response)
+
+        expect(registerRes.status).toBe(400)
+        expect(registerRes.data.message).toMatch(/pending driver invitation/)
+        expect(await countDrivers()).toBe(1)
+      })
+
+      it("blocks POST /drivers with the email of a driver without an invitation", async () => {
+        // Drivers created before T14.1 have no invitation.
         const token = await registerDriverIdentity(api, {
           email: "ana@test.com",
         })
+        const service: DriverModuleService = getContainer().resolve(DRIVER_MODULE)
+        await service.createDrivers({ ...VALID_BODY, vehicle_type: "car" })
 
         const res = await api
           .post("/drivers", defaultDriverBody, bearer(token))
