@@ -1,4 +1,3 @@
-import { MedusaError } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { PACKAGE_PRESET_MODULE } from "../../../modules/package-preset"
 import {
@@ -6,6 +5,10 @@ import {
   WeightUnit,
 } from "../../../modules/package-preset/utils/units"
 import PackagePresetModuleService from "../../../modules/package-preset/service"
+import {
+  defaultPackagePresetConflictError,
+  findDefaultPackagePresetId,
+} from "../utils/default-package-preset-conflict"
 
 export type CreatePackagePresetStepInput = {
   name: string
@@ -36,19 +39,11 @@ export const createPackagePresetStep = createStep(
 
       // A concurrent request may have set its own default after
       // unsetDefaultPackagePresetStep ran; the unique index rejects this one.
-      const [current] = await packagePresetModuleService.listPackagePresets(
-        { is_default: true },
-        { select: ["id"], take: 1 }
-      )
-
-      if (!current) {
+      if (!(await findDefaultPackagePresetId(packagePresetModuleService))) {
         throw error
       }
 
-      throw new MedusaError(
-        MedusaError.Types.CONFLICT,
-        "Another package preset was set as the default at the same time. Retry the request."
-      )
+      throw defaultPackagePresetConflictError()
     }
   },
   async (id, { container }) => {

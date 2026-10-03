@@ -1,7 +1,10 @@
-import { MedusaError } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { PACKAGE_PRESET_MODULE } from "../../../modules/package-preset"
 import PackagePresetModuleService from "../../../modules/package-preset/service"
+import {
+  defaultPackagePresetConflictError,
+  findDefaultPackagePresetId,
+} from "../utils/default-package-preset-conflict"
 
 // Marks an existing preset as the default. Runs after
 // unsetDefaultPackagePresetStep has cleared the previous default.
@@ -19,19 +22,15 @@ export const setDefaultPackagePresetStep = createStep(
     } catch (error) {
       // A concurrent request may have set its own default after
       // unsetDefaultPackagePresetStep ran; the unique index rejects this one.
-      const [current] = await packagePresetModuleService.listPackagePresets(
-        { is_default: true },
-        { select: ["id"], take: 1 }
+      const currentId = await findDefaultPackagePresetId(
+        packagePresetModuleService
       )
 
-      if (!current || current.id === id) {
+      if (!currentId || currentId === id) {
         throw error
       }
 
-      throw new MedusaError(
-        MedusaError.Types.CONFLICT,
-        "Another package preset was set as the default at the same time. Retry the request."
-      )
+      throw defaultPackagePresetConflictError()
     }
 
     return new StepResponse(undefined, id)
