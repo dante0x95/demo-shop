@@ -1,6 +1,7 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Photo, Trash } from "@medusajs/icons"
 import {
+  Button,
   Container,
   createDataTableColumnHelper,
   DataTable,
@@ -18,7 +19,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   AdminMediaAsset,
   deleteMediaAsset,
@@ -68,11 +69,31 @@ const MediaPage = () => {
     ...(mimeType !== ALL_TYPES ? { mime_type: mimeType } : {}),
   }
 
-  const { data, isLoading } = useQuery({
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+    isPlaceholderData,
+  } = useQuery({
     queryKey: mediaQueryKeys.list(params),
     queryFn: () => listMediaAssets(params),
     placeholderData: keepPreviousData,
   })
+
+  // Deleting the last asset of the last page leaves the current page past the
+  // end; move back to the new last page instead of showing an empty one.
+  const lastPageIndex = data
+    ? Math.max(0, Math.ceil(data.count / pagination.pageSize) - 1)
+    : 0
+
+  useEffect(() => {
+    if (data && !isPlaceholderData && pagination.pageIndex > lastPageIndex) {
+      setPagination((prev) => ({ ...prev, pageIndex: lastPageIndex }))
+    }
+  }, [data, isPlaceholderData, lastPageIndex, pagination.pageIndex])
 
   const { mutate: remove } = useMutation({
     mutationFn: (asset: AdminMediaAsset) => deleteMediaAsset(asset.id),
@@ -194,8 +215,32 @@ const MediaPage = () => {
             <UploadMediaModal />
           </div>
         </DataTable.Toolbar>
-        <DataTable.Table />
-        <DataTable.Pagination />
+        {isError ? (
+          <div
+            role="alert"
+            className="flex flex-col items-center gap-y-3 px-6 py-12"
+          >
+            <Text size="small" leading="compact" weight="plus">
+              The media library could not be loaded
+            </Text>
+            <Text size="small" leading="compact" className="text-ui-fg-subtle">
+              {error?.message || "Unexpected error"}
+            </Text>
+            <Button
+              size="small"
+              variant="secondary"
+              onClick={() => refetch()}
+              isLoading={isFetching}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : (
+          <>
+            <DataTable.Table />
+            <DataTable.Pagination />
+          </>
+        )}
       </DataTable>
     </Container>
   )

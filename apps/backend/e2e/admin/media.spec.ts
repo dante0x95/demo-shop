@@ -306,6 +306,62 @@ test.describe("Admin media library page", () => {
     await expect(page.getByRole("row")).toHaveCount(2)
     await expect(page.getByRole("row").nth(1)).toContainText(files[0].name)
   })
+
+  test("goes back a page after deleting the only media on the last page", async ({
+    page,
+  }) => {
+    const tag = unique("last-page")
+    const files = Array.from({ length: 21 }, (_, i) =>
+      png(`${tag}-${String(i + 1).padStart(2, "0")}`)
+    )
+
+    for (const file of files) {
+      await uploadViaApi(page.request, file)
+    }
+
+    await page.goto("/app/media")
+    await search(page, tag)
+    await page.getByRole("button", { name: "Next" }).click()
+    await expect(page.getByRole("row")).toHaveCount(2)
+
+    await rowFor(page, files[0].name).getByRole("button").click()
+    await page.getByRole("menuitem", { name: "Delete" }).click()
+    await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click()
+    await expect(page.getByText(`"${files[0].name}" deleted`)).toBeVisible()
+
+    // Page 2 no longer exists, so the page shows page 1 with the other 20.
+    await expect(page.getByRole("row")).toHaveCount(21)
+    await expect(page.getByRole("row").nth(1)).toContainText(files[20].name)
+    await expect(page.getByRole("button", { name: "Next" })).toBeDisabled()
+  })
+
+  test("shows an error with a retry when the list fails to load", async ({
+    page,
+  }) => {
+    const file = png(unique("retry"))
+    await uploadViaApi(page.request, file)
+
+    const listRequest = /\/admin\/media\?/
+    await page.route(listRequest, (route) =>
+      route.fulfill({
+        status: 500,
+        json: { type: "unknown_error", message: "Media storage is unavailable" },
+      })
+    )
+
+    await page.goto("/app/media")
+
+    const alert = page.getByRole("alert")
+    await expect(alert).toContainText("The media library could not be loaded")
+    await expect(alert).toContainText("Media storage is unavailable")
+    await expect(page.getByRole("table")).toHaveCount(0)
+
+    await page.unroute(listRequest)
+    await alert.getByRole("button", { name: "Retry" }).click()
+
+    await expect(page.getByRole("alert")).toHaveCount(0)
+    await expect(rowFor(page, file.name)).toBeVisible()
+  })
 })
 
 test.describe("Admin media library page without a session", () => {
