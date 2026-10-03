@@ -11,6 +11,7 @@ import {
   AdminCreateDriver,
   AdminGetDriverParams,
   AdminGetDriversParams,
+  AdminResendDriverInvite,
 } from "./validators"
 
 export const adminDriverRoutesMiddlewares: MiddlewareRoute[] = [
@@ -29,6 +30,17 @@ export const adminDriverRoutesMiddlewares: MiddlewareRoute[] = [
     matcher: "/admin/drivers",
     middlewares: [
       validateAndTransformBody(AdminCreateDriver),
+      validateAndTransformQuery(
+        AdminGetDriverParams,
+        retrieveAdminDriverTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    method: ["POST"],
+    matcher: "/admin/drivers/:id/resend-invite",
+    middlewares: [
+      validateAndTransformBody(AdminResendDriverInvite),
       validateAndTransformQuery(
         AdminGetDriverParams,
         retrieveAdminDriverTransformQueryConfig

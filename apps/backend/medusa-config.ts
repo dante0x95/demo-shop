@@ -41,5 +41,23 @@ module.exports = defineConfig({
     {
       resolve: './src/modules/package-preset',
     },
+    {
+      // Medusa's default local provider (logs instead of sending), extended
+      // from "feed" to "email" for driver invitations until a real email
+      // provider is set up.
+      resolve: '@medusajs/medusa/notification',
+      options: {
+        providers: [
+          {
+            resolve: '@medusajs/medusa/notification-local',
+            id: 'local',
+            options: {
+              name: 'Local Notification Provider',
+              channels: ['feed', 'email'],
+            },
+          },
+        ],
+      },
+    },
   ],
 })

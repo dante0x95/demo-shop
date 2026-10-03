@@ -39,3 +39,10 @@ export const AdminCreateDriver = z.strictObject({
 })
 
 export type AdminCreateDriverType = z.infer<typeof AdminCreateDriver>
+
+// Nothing to send: the new link goes to the driver's email.
+export const AdminResendDriverInvite = z.strictObject({})
+
+export type AdminResendDriverInviteType = z.infer<
+  typeof AdminResendDriverInvite
+>
