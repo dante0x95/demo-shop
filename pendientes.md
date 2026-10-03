@@ -52,7 +52,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Admin UI (panel de Medusa, temporal)
 - [x] Marcas: listado + crear
 - [x] Marcas: detalle + editar + eliminar (con productos vinculados) + e2e
-- [ ] Repartidores: listado + crear + reenviar invitación · T24 · libre
+- [x] Repartidores: listado + crear + reenviar invitación · T24
 - [ ] Pedido: widget para asignar repartidor + estado de entrega · T25 · libre
 - [x] Biblioteca de medios: explorar + subir + eliminar · T26
 - [ ] Biblioteca de medios: filtro solo con los tipos permitidos + miniaturas en e2e · T26.1 · libre

@@ -14,7 +14,7 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T20, T21, T23 (API) · T24, T25, T26.1 (admin UI, one at a time).
+Free right now: T20, T21, T23 (API) · T25, T26.1 (admin UI, one at a time).
 Blocked outside this backlog: T07.1 (custom admin phase).
 T20, T21 and T23 have open ❓ for the plan gate. T14.2 waits on its ❓ (open decisions from T14.1).
 T19 waits on its own ❓ (one plugin or several, where to publish) and on T20, T23, T28.
@@ -299,7 +299,7 @@ Load the `building-admin-dashboard-customizations` skill. Tests: `npm run test:e
 safe in parallel (fixed database and port), so never run two Phase 7 tasks at once. UI for
 Reusable modules (T26, T27, T28) keeps its files grouped by module so T19 can move them.
 
-### [ ] T24 · Drivers page
+### [x] T24 · Drivers page
 Deps: T14.1
 - List (paginated, `is_active` filter), create, and resend invitation.
 
