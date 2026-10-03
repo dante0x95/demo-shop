@@ -1,7 +1,8 @@
 import { model } from "@medusajs/framework/utils"
+import { DRIVER_VEHICLE_TYPES } from "../utils/vehicle-types"
 import DriverInvite from "./driver-invite"
 
-export const DRIVER_VEHICLE_TYPES = ["motorcycle", "car", "bicycle"] as const
+export { DRIVER_VEHICLE_TYPES }
 
 const Driver = model.define("driver", {
   id: model.id({ prefix: "drv" }).primaryKey(),

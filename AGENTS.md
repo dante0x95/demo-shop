@@ -91,7 +91,14 @@ Single test — pass a path/pattern through to Jest, keeping `TEST_TYPE`:
 ```bash
 cd apps/backend && <pm> run test:unit -- src/modules/foo/__tests__/service.unit.spec.ts
 cd apps/backend && <pm> run test:unit -- -t "returns the cart"
+cd apps/backend && <pm> run test:integration:http -- integration-tests/http/drivers
+cd apps/backend && <pm> run test:integration:modules -- src/modules/brand
 ```
+
+Integration tests are scoped to the change: run the suites for the modules and endpoints it
+touches, plus those of modules that depend on shared code it changes (`src/api/middlewares.ts`,
+links, shared workflows/steps/utils, `integration-tests/helpers`, `medusa-config.ts`). Not the
+whole suite.
 
 ### Database
 
@@ -239,8 +246,8 @@ For backend changes, consider:
 
 1. targeted test file or test name
 2. unit tests
-3. module integration tests
-4. HTTP integration tests
+3. module integration tests for the modules the diff touches
+4. HTTP integration tests for the endpoints the diff touches
 5. lint
 6. build/type checking
 7. broader repository tests when the change can affect other packages
