@@ -1,4 +1,9 @@
-import { hasImageExtension, hasImageSignature } from "../image-types"
+import {
+  hasImageExtension,
+  hasImageSignature,
+  SUPPORTED_IMAGE_TYPES,
+} from "../image-types"
+import { SUPPORTED_IMAGE_MIME_TYPES } from "../mime-types"
 
 const bytes = (...parts: (number[] | string)[]) =>
   Buffer.concat(
@@ -52,5 +57,13 @@ describe("hasImageSignature", () => {
     ["image/svg+xml", bytes("<svg>")],
   ])("rejects %s with a mismatched header", (mimeType, header) => {
     expect(hasImageSignature(mimeType, header)).toBe(false)
+  })
+})
+
+describe("SUPPORTED_IMAGE_TYPES", () => {
+  it("has a signature for exactly the shared list of MIME types", () => {
+    expect(Object.keys(SUPPORTED_IMAGE_TYPES).sort()).toEqual(
+      [...SUPPORTED_IMAGE_MIME_TYPES].sort()
+    )
   })
 })

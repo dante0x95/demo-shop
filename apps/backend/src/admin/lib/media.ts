@@ -1,4 +1,4 @@
-import { SUPPORTED_IMAGE_TYPES } from "../../modules/media/utils/image-types"
+import { SUPPORTED_IMAGE_MIME_TYPES } from "../../modules/media/utils/mime-types"
 import { sdk } from "./sdk"
 
 export type AdminMediaAsset = {
@@ -36,7 +36,7 @@ export type AdminUploadMediaFile = {
 
 // Every type the media module can store. A shop may allow fewer through the
 // module's `allowed_mime_types` option; the upload API rejects the rest.
-export const MEDIA_MIME_TYPES = Object.keys(SUPPORTED_IMAGE_TYPES)
+export const MEDIA_MIME_TYPES: readonly string[] = SUPPORTED_IMAGE_MIME_TYPES
 
 export const mediaTypeLabel = (mimeType: string) =>
   (mimeType.split("/")[1] ?? mimeType).toUpperCase()
