@@ -14,10 +14,10 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T14.1, T17.1, T19.
+Free right now: T14.1, T17.1, T20, T21, T22, T23 (API) · T25, T26, T27 (admin UI, one at a time).
 Blocked outside this backlog: T07.1 (custom admin phase).
-T17.1 unblocks T18, so `/next-task` picks T17.1 first. T19 waits on its open ❓
-(one plugin or several, where to publish).
+T17.1 unblocks T18, so `/next-task` picks T17.1 first. T20-T23 have open ❓ for the plan gate.
+T19 waits on its own ❓ (one plugin or several, where to publish) and on T20, T23, T26-T28.
 
 Files several tasks touch (see the rules file for how to resolve a conflict):
 
@@ -26,6 +26,7 @@ Files several tasks touch (see the rules file for how to resolve a conflict):
 | `apps/backend/medusa-config.ts` | T10 (module registration), T14.1 (notification provider), T19 |
 | `apps/backend/src/api/middlewares.ts` | T08, T10, T14, T14.1, T15, T19 |
 | `src/api/drivers/middlewares.ts` | T13, T16, T17, T18 (a chain, never in parallel), T14.1 (one public entry, sorted position) |
+| `apps/backend/src/admin/lib/` (SDK, shared hooks) | T24-T30 |
 | `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19 |
 | `apps/backend/src/modules/brand/`, `src/workflows/brand/` | T08 (brand hook), T19 |
 
@@ -229,10 +230,87 @@ Deps: T11, T17, T17.1
 - Double capture → 409.
 - Decided: an inactive driver can't collect payment → 403 "Driver is inactive" (same as T17.1).
 
-## Phase 6 — Reuse
+## Phase 6 — Product parity (Shopify product form)
+
+Fields Shopify's product page has and Medusa lacks. Each task ships its own admin endpoint; the
+"Add product" page (T30) calls them right after `POST /admin/products/full`, so these tasks
+don't touch `create-product-full` and can run in parallel.
+
+### [ ] T20 · Product metafield values
+Deps: T09 · Ships: metafield values (`metafield` module, Reusable)
+- Store and edit a product's values for its metafield definitions (`owner_type: product`), e.g.
+  "Disclosures". Each value is validated against its definition's type and `select` options.
+- ❓ What happens to stored values when a definition is deleted. ❓ Whether `/store` product
+  responses expose the values (storefront and WhatsApp agent).
+
+### [ ] T21 · Compare-at price and cost per item
+Deps: T08
+- Per variant, like Shopify. Compare-at shows a discount on the storefront; cost per item feeds
+  margin and is admin-only (never in `/store` responses).
+- ❓ Compare-at storage: Medusa "sale" price list (the storefront gets original vs calculated
+  price for free) or a stored amount per variant and currency. ❓ Must compare-at be higher
+  than the price. ❓ Cost currency (store default only, or per currency).
+
+### [ ] T22 · Product SEO title and meta description
+Deps: —
+- Admin sets an SEO page title and meta description per product; the URL slug stays `handle`.
+  `/store` product responses expose them so the storefront can render the tags.
+- ❓ Fallback when empty (product title / description). ❓ Length limits (Shopify suggests
+  70 / 320 characters without enforcing them).
+
+### [ ] T23 · Package preset per product
+Deps: T10 · Ships: `product ↔ package_preset` link (`package-preset`, Reusable)
+- "Package when shipped alone": pick a package preset for a product; none set → the store's
+  default preset.
+- ❓ Per product or per variant.
+
+## Phase 7 — Admin UI (Medusa's built-in panel, temporary)
+
+Pages and widgets in `src/admin` for features that have no screen yet, like the Brands pages.
+Load the `building-admin-dashboard-customizations` skill. Tests: `npm run test:e2e`, which is not
+safe in parallel (fixed database and port), so never run two Phase 7 tasks at once. UI for
+Reusable modules (T26, T27, T28) keeps its files grouped by module so T19 can move them.
+
+### [ ] T24 · Drivers page
+Deps: T14.1
+- List (paginated, `is_active` filter), create, and resend invitation.
+
+### [ ] T25 · Assign-driver widget on the order page
+Deps: T15, T17
+- Shows the assigned driver and delivery status; admin picks or changes the driver. Shows the
+  API's 400 reasons (inactive driver, canceled or delivered order).
+
+### [ ] T26 · Media library page
+Deps: T07
+- Browse (paginated, search, type filter), upload and delete media assets.
+
+### [ ] T27 · Package presets settings page
+Deps: T10
+- List, create and delete presets; mark the default.
+
+### [ ] T28 · Metafields UI
+Deps: T20
+- Settings page for metafield definitions, and a product-page widget to edit the product's
+  metafield values.
+
+### [ ] T29 · Product-page widgets for compare-at, cost, SEO and package
+Deps: T21, T22, T23
+- Edit compare-at price and cost per item per variant, SEO title and meta description, and the
+  product's package preset.
+
+### [ ] T30 · "Add product" page (Shopify-style)
+Deps: T08, T20, T21, T22, T23, T26
+- One page like Shopify's: title, description, media picked from or uploaded to the library,
+  category, price, compare-at, cost, stock per location, SKU and barcode, shipping (package,
+  size, weight, origin, HS code), variants, metafields, SEO, status, sales channels, type,
+  brand as vendor, collection and tags.
+- Saves with `POST /admin/products/full`, then the T20-T23 endpoints. If one of those fails,
+  the product stays created and the page shows which part to retry.
+
+## Phase 8 — Reuse
 
 ### [ ] T19 · Extract reusable modules into plugin(s)
-Deps: T04, T07, T08, T09, T10 (T08 decides which brand/media code stays in the app)
+Deps: T04, T07, T08, T09, T10, T20, T23, T26, T27, T28 (T08 decides which brand/media code stays in the app)
 - Move every Reusable module (brand, media, metafield, package-preset) with its links,
   workflows, routes and admin UI into `packages/`, built with `medusa plugin:build`.
 - This shop consumes the plugin(s) via `plugins` in `medusa-config.ts`; shop workflows

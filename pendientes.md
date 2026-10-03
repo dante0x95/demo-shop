@@ -38,9 +38,22 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [ ] Invitación de repartidores creados desde el admin (email + reenviar) · T14.1 · libre
 - [x] POST /admin/orders/:id/assign-driver · T15
 
+## Paridad con el formulario de producto de Shopify
+- [ ] Valores de metafields por producto · T20 · libre
+- [ ] Precio de comparación (compare-at) y costo por artículo · T21 · libre
+- [ ] SEO: título de página y meta descripción · T22 · libre
+- [ ] Paquete predefinido por producto · T23 · libre
+
 ## Admin UI (panel de Medusa, temporal)
 - [x] Marcas: listado + crear
 - [x] Marcas: detalle + editar + eliminar (con productos vinculados) + e2e
+- [ ] Repartidores: listado + crear + reenviar invitación · T24 · tras T14.1
+- [ ] Pedido: widget para asignar repartidor + estado de entrega · T25 · libre
+- [ ] Biblioteca de medios: explorar + subir + eliminar · T26 · libre
+- [ ] Paquetes predefinidos: página de ajustes · T27 · libre
+- [ ] Metafields: definiciones + valores en el producto · T28 · tras T20
+- [ ] Producto: widgets de compare-at, costo, SEO y paquete · T29 · tras T21 + T22 + T23
+- [ ] Página "Agregar producto" estilo Shopify · T30 · tras T08 + T20-T23 + T26
 
 ## Endpoints Driver (protegidos con authenticate("driver"))
 - [x] POST /drivers (registro, junto con /auth/driver/emailpass/register)
@@ -66,7 +79,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [ ] Proveedor real de email (hoy: proveedor local de Medusa, desde T14.1) · sin tarea en PLAN
 
 ## Reutilización
-- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · libre
+- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T20, T23, T26-T28 (y sus ❓)
 
 ## Fuera del MVP
 - Colecciones automáticas, taxonomía con atributos, publicación programada,
