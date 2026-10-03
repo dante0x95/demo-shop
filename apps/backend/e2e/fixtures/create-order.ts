@@ -37,26 +37,28 @@ export default async function createOrder({ container, args }: ExecArgs) {
 
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
 
-  let {
-    data: [region],
+  // Specs share the E2E database, so the region is created once.
+  const {
+    data: [existingRegion],
   } = await query.graph({
     entity: "region",
     fields: ["id"],
     filters: { name: REGION_NAME },
   })
+  let regionId: string | undefined = existingRegion?.id
 
-  if (!region) {
+  if (!regionId) {
     const { result } = await createRegionsWorkflow(container).run({
       input: {
         regions: [{ name: REGION_NAME, currency_code: "usd", countries: ["us"] }],
       },
     })
-    region = result[0]
+    regionId = result[0].id
   }
 
   const { result: order } = await createOrderWorkflow(container).run({
     input: {
-      region_id: region.id,
+      region_id: regionId,
       email,
       shipping_address: {
         first_name: "Maria",
@@ -102,25 +104,26 @@ const addDeliveredFulfillment = async (
   const [item] = order.items!
   const quantity = ITEM_QUANTITY
 
-  let {
-    data: [location],
+  const {
+    data: [existingLocation],
   } = await query.graph({
     entity: "stock_location",
     fields: ["id"],
     filters: { name: LOCATION_NAME },
   })
+  let locationId: string | undefined = existingLocation?.id
 
-  if (!location) {
+  if (!locationId) {
     const { result } = await createStockLocationsWorkflow(container).run({
       input: { locations: [{ name: LOCATION_NAME }] },
     })
-    location = result[0]
+    locationId = result[0].id
   }
 
   const fulfillment = await container
     .resolve(Modules.FULFILLMENT)
     .createFulfillment({
-      location_id: location.id,
+      location_id: locationId,
       provider_id: "manual_manual",
       shipped_at: new Date(),
       delivered_at: new Date(),
