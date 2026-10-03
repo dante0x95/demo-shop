@@ -80,11 +80,11 @@ export const GET = async (
 
   if (delivery_status && orderIds.length) {
     const deliveredOrderIds = await getDeliveredOrderIds(query, orderIds)
-    const wantDelivered = delivery_status === "delivered"
 
-    orderIds = orderIds.filter(
-      (id) => deliveredOrderIds.has(id) === wantDelivered
-    )
+    orderIds =
+      delivery_status === "delivered"
+        ? orderIds.filter((id) => deliveredOrderIds.has(id))
+        : orderIds.filter((id) => !deliveredOrderIds.has(id))
   }
 
   if (!orderIds.length) {
