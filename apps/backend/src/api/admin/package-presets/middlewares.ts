@@ -11,6 +11,7 @@ import {
   AdminCreatePackagePreset,
   AdminGetPackagePresetParams,
   AdminGetPackagePresetsParams,
+  AdminSetDefaultPackagePreset,
 } from "./validators"
 
 export const adminPackagePresetRoutesMiddlewares: MiddlewareRoute[] = [
@@ -39,6 +40,17 @@ export const adminPackagePresetRoutesMiddlewares: MiddlewareRoute[] = [
     method: ["GET"],
     matcher: "/admin/package-presets/:id",
     middlewares: [
+      validateAndTransformQuery(
+        AdminGetPackagePresetParams,
+        retrievePackagePresetTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    method: ["POST"],
+    matcher: "/admin/package-presets/:id/set-default",
+    middlewares: [
+      validateAndTransformBody(AdminSetDefaultPackagePreset),
       validateAndTransformQuery(
         AdminGetPackagePresetParams,
         retrievePackagePresetTransformQueryConfig

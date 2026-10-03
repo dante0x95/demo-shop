@@ -430,5 +430,139 @@ medusaIntegrationTestRunner({
         expect(after.status).toBe(200)
       })
     })
+
+    describe("POST /admin/package-presets/:id/set-default", () => {
+      const setDefault = (id: string, body: Record<string, unknown> = {}) =>
+        api
+          .post(
+            `/admin/package-presets/${id}/set-default`,
+            body,
+            adminHeaders
+          )
+          .catch((e) => e.response)
+
+      it("makes a preset the first default", async () => {
+        const created = await createPreset()
+
+        const res = await setDefault(created.id)
+
+        expect(res.status).toBe(200)
+        expect(res.data.package_preset).toEqual({
+          ...created,
+          is_default: true,
+          updated_at: expect.any(String),
+        })
+        expect(await listDefaults()).toEqual([
+          expect.objectContaining({ id: created.id }),
+        ])
+      })
+
+      it("replaces the current default", async () => {
+        const previous = await createPreset({ is_default: true })
+        const next = await createPreset({ name: "Next" })
+
+        const res = await setDefault(next.id)
+
+        expect(res.status).toBe(200)
+        expect(res.data.package_preset.is_default).toBe(true)
+        expect((await getPreset(previous.id)).is_default).toBe(false)
+        expect(await listDefaults()).toEqual([
+          expect.objectContaining({ id: next.id }),
+        ])
+      })
+
+      it("is a no-op for the current default", async () => {
+        const current = await createPreset({ is_default: true })
+        await createPreset({ name: "Other" })
+
+        const res = await setDefault(current.id)
+
+        expect(res.status).toBe(200)
+        expect(res.data.package_preset).toEqual(current)
+        expect(await listDefaults()).toEqual([
+          expect.objectContaining({ id: current.id }),
+        ])
+      })
+
+      it("keeps exactly one default under concurrent requests", async () => {
+        const presets = await Promise.all(
+          Array.from({ length: 5 }, (_, i) => createPreset({ name: `Box ${i}` }))
+        )
+
+        const responses = await Promise.all(
+          presets.map((preset) => setDefault(preset.id))
+        )
+
+        const statuses = responses.map((res) => res.status)
+
+        expect(statuses.every((status) => [200, 409].includes(status))).toBe(
+          true
+        )
+        expect(statuses).toContain(200)
+        responses
+          .filter((res) => res.status === 409)
+          .forEach((res) =>
+            expect(res.data.message).toBe(
+              "Another package preset was set as the default at the same time. Retry the request."
+            )
+          )
+
+        expect(await listDefaults()).toHaveLength(1)
+      })
+
+      it("returns 400 for a body with fields", async () => {
+        const created = await createPreset()
+
+        const res = await setDefault(created.id, { is_default: false })
+
+        expect(res.status).toBe(400)
+        expect((await getPreset(created.id)).is_default).toBe(false)
+      })
+
+      it("returns 400 for unknown query params", async () => {
+        const created = await createPreset()
+
+        const res = await api
+          .post(
+            `/admin/package-presets/${created.id}/set-default?foo=bar`,
+            {},
+            adminHeaders
+          )
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(400)
+      })
+
+      it("returns 404 for an unknown id and keeps the current default", async () => {
+        const current = await createPreset({ is_default: true })
+
+        const res = await setDefault(UNKNOWN_ID)
+
+        expect(res.status).toBe(404)
+        expect(await listDefaults()).toEqual([
+          expect.objectContaining({ id: current.id }),
+        ])
+      })
+
+      it("returns 404 for a deleted preset", async () => {
+        const created = await createPreset()
+        await api.delete(`/admin/package-presets/${created.id}`, adminHeaders)
+
+        const res = await setDefault(created.id)
+
+        expect(res.status).toBe(404)
+      })
+
+      it("returns 401 without authentication", async () => {
+        const created = await createPreset()
+
+        const res = await api
+          .post(`/admin/package-presets/${created.id}/set-default`, {})
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(401)
+        expect((await getPreset(created.id)).is_default).toBe(false)
+      })
+    })
   },
 })

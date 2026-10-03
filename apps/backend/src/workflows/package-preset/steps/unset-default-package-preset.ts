@@ -1,6 +1,7 @@
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { PACKAGE_PRESET_MODULE } from "../../../modules/package-preset"
 import PackagePresetModuleService from "../../../modules/package-preset/service"
+import { findDefaultPackagePresetId } from "../utils/default-package-preset-conflict"
 
 // Clears the current default so a new preset can take its place. Returns the
 // ids it cleared (at most one, enforced by the unique index on is_default).
@@ -29,12 +30,7 @@ export const unsetDefaultPackagePresetStep = createStep(
 
     // A concurrent request may have set its own default meanwhile; restoring
     // ours would break the one-default rule, so the newer default stays.
-    const [current] = await packagePresetModuleService.listPackagePresets(
-      { is_default: true },
-      { select: ["id"], take: 1 }
-    )
-
-    if (current) {
+    if (await findDefaultPackagePresetId(packagePresetModuleService)) {
       return
     }
 

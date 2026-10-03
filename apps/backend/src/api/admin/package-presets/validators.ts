@@ -6,7 +6,7 @@ import {
 import {
   DIMENSION_UNITS,
   WEIGHT_UNITS,
-} from "../../../modules/package-preset/models/package-preset"
+} from "../../../modules/package-preset/utils/units"
 
 export const AdminGetPackagePresetParams = createSelectParams()
 
@@ -47,4 +47,11 @@ export const AdminCreatePackagePreset = z.strictObject({
 
 export type AdminCreatePackagePresetType = z.infer<
   typeof AdminCreatePackagePreset
+>
+
+// Nothing to send: the preset in the path becomes the default.
+export const AdminSetDefaultPackagePreset = z.strictObject({})
+
+export type AdminSetDefaultPackagePresetType = z.infer<
+  typeof AdminSetDefaultPackagePreset
 >

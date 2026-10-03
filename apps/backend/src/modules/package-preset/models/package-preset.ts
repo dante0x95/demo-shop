@@ -1,12 +1,5 @@
 import { model } from "@medusajs/framework/utils"
-
-export const DIMENSION_UNITS = ["mm", "cm", "in"] as const
-
-export type DimensionUnit = (typeof DIMENSION_UNITS)[number]
-
-export const WEIGHT_UNITS = ["g", "kg", "oz", "lb"] as const
-
-export type WeightUnit = (typeof WEIGHT_UNITS)[number]
+import { DIMENSION_UNITS, WEIGHT_UNITS } from "../utils/units"
 
 const PackagePreset = model
   .define("package_preset", {
