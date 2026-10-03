@@ -1,5 +1,8 @@
 import { z } from "@medusajs/framework/zod"
-import { createSelectParams } from "@medusajs/medusa/api/utils/validators"
+import {
+  createFindParams,
+  createSelectParams,
+} from "@medusajs/medusa/api/utils/validators"
 import { DRIVER_VEHICLE_TYPES } from "../../modules/driver/models/driver"
 
 export const GetDriverParams = createSelectParams()
@@ -11,6 +14,21 @@ export const GetDriverMeParams = z.strictObject({
 })
 
 export type GetDriverMeParamsType = z.infer<typeof GetDriverMeParams>
+
+// `delivered`: the order has a fulfillment with `delivered_at` set (the same
+// rule that stops a delivered order from being reassigned). `pending`: it has
+// none yet.
+export const DRIVER_ORDER_DELIVERY_STATUSES = ["pending", "delivered"] as const
+
+// `with_deleted` is left out: a driver never sees deleted orders.
+export const GetDriverOrdersParams = z.strictObject({
+  ...createFindParams({ limit: 20, offset: 0, order: "-created_at" }).omit({
+    with_deleted: true,
+  }).shape,
+  delivery_status: z.enum(DRIVER_ORDER_DELIVERY_STATUSES).optional(),
+})
+
+export type GetDriverOrdersParamsType = z.infer<typeof GetDriverOrdersParams>
 
 // email comes from the auth identity and is_active is set by admins, so
 // neither is accepted here.
