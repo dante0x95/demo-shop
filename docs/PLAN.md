@@ -273,6 +273,13 @@ Deps: —
   `/store` product responses expose them so the storefront can render the tags.
 - ❓ Fallback when empty (product title / description). ❓ Length limits (Shopify suggests
   70 / 320 characters without enforcing them).
+- Decided: SEO title is never empty. If the admin hasn't set one, the product title is used.
+  Nothing is stored until the admin edits it, so an unedited SEO title follows later renames of
+  the product. Clearing the field (empty or whitespace-only) goes back to the fallback.
+- Decided: Empty meta description → falls back to the product description, cut to 160
+  characters.
+- Decided: No length limits enforced by the API. 70 (title) / 160 (meta description) are only a
+  UI character counter (Shopify-style), which belongs to T29.
 
 ### [ ] T23 · Package preset per product
 Deps: T10 · Ships: `product ↔ package_preset` link (`package-preset`, Reusable)
