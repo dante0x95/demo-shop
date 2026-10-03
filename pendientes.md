@@ -23,7 +23,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Workflows
 - [x] create-product-full: producto + variantes + inventario por ubicación + marca · T08
 - [x] assign-driver: asignar repartidor a un pedido · T15
-- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T18 · T17 hecho, T18 libre
+- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T17.1 + T18 · T17 hecho, T17.1 libre, T18 tras T17.1
 
 ## Endpoints Admin
 - [x] GET/POST /admin/brands
@@ -35,6 +35,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] GET/POST/DELETE /admin/metafield-definitions · T09
 - [x] GET/POST/DELETE /admin/package-presets · T10
 - [x] GET/POST /admin/drivers · T14
+- [ ] Invitación de repartidores creados desde el admin (email + reenviar) · T14.1 · libre
 - [x] POST /admin/orders/:id/assign-driver · T15
 
 ## Admin UI (panel de Medusa, temporal)
@@ -46,7 +47,8 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] GET /drivers/me · T13
 - [x] GET /drivers/me/orders · T16
 - [x] POST /drivers/me/orders/:id/delivered · T17
-- [ ] POST /drivers/me/orders/:id/collect-payment · T18 · libre
+- [ ] Repartidor inactivo no puede confirmar entregas (403) · T17.1 · libre
+- [ ] POST /drivers/me/orders/:id/collect-payment · T18 · tras T17.1
 
 ## Endpoints Store (storefront + agente de WhatsApp)
 - [x] GET /store/brands
@@ -59,6 +61,9 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Pagos
 - [x] Contra entrega: proveedor manual (system) habilitado en la región · T11
 - [ ] (Opcional) Payment Provider propio si hay reglas por zona o recargo · sin tarea en PLAN
+
+## Notificaciones
+- [ ] Proveedor real de email (hoy: proveedor local de Medusa, desde T14.1) · sin tarea en PLAN
 
 ## Reutilización
 - [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · libre

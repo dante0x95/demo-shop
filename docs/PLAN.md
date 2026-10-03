@@ -14,17 +14,18 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T18, T19.
+Free right now: T14.1, T17.1, T19.
 Blocked outside this backlog: T07.1 (custom admin phase).
-T19 has open ❓ (one plugin or several, where to publish), so `/next-task` picks T18 until they are answered.
+T17.1 unblocks T18, so `/next-task` picks T17.1 first. T19 waits on its open ❓
+(one plugin or several, where to publish).
 
 Files several tasks touch (see the rules file for how to resolve a conflict):
 
 | File | Touched by |
 |------|------------|
-| `apps/backend/medusa-config.ts` | T10 (module registration), T19 |
-| `apps/backend/src/api/middlewares.ts` | T08, T10, T14, T15, T19 |
-| `src/api/drivers/middlewares.ts` | T13, T16, T17, T18 (a chain, never in parallel) |
+| `apps/backend/medusa-config.ts` | T10 (module registration), T14.1 (notification provider), T19 |
+| `apps/backend/src/api/middlewares.ts` | T08, T10, T14, T14.1, T15, T19 |
+| `src/api/drivers/middlewares.ts` | T13, T16, T17, T18 (a chain, never in parallel), T14.1 (one public entry, sorted position) |
 | `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19 |
 | `apps/backend/src/modules/brand/`, `src/workflows/brand/` | T08 (brand hook), T19 |
 
@@ -176,6 +177,22 @@ Deps: T12
 Deps: T12
 - Paginated list + create.
 
+### [ ] T14.1 · Driver invitation
+Deps: T14 · Ships: driver invite (model + workflows), local notification provider
+- Today a driver created by an admin has no login, and can't sign up because the email is taken.
+- Decided: creating a driver from the admin (`POST /admin/drivers`) sends an invitation email
+  with a link to set a password. Accepting it creates the driver's `emailpass` login, linked to
+  that driver.
+- Decided: the link is valid for 7 days. `POST /admin/drivers/:id/resend-invite` sends a new one
+  and invalidates the previous link. Also usable for drivers created before this task.
+- Decided: while the invitation is pending, logging in (`POST /auth/driver/emailpass`) or
+  registering (`/auth/driver/emailpass/register`, `POST /drivers`) with that email returns an
+  error telling the driver to check their email for the invitation.
+- Decided: send through Medusa's local notification provider (no new dependency). The real email
+  provider is a separate item in pendientes.md.
+- Tests: create → invite sent; accept → can log in; expired or replaced link → rejected;
+  login/register with a pending invite → the "check your email" error.
+
 ### [x] T15 · POST /admin/orders/:id/assign-driver
 Deps: T12 · Ships: `order ↔ driver` link, `assign-driver` workflow
 - One driver per order; reassigning replaces the previous link.
@@ -199,10 +216,18 @@ Deps: T16 · Ships: `confirm-delivery` (part 1)
 - Marks the fulfillment as delivered (core flow).
 - Order not assigned to this driver → 404 (don't leak existence). Idempotent.
 
+### [ ] T17.1 · Inactive drivers can't confirm deliveries
+Deps: T17
+- Today a driver deactivated after being assigned can still confirm delivery.
+- Decided: an inactive driver (`is_active: false`) delivers nothing, so
+  `POST /drivers/me/orders/:id/delivered` → 403 "Driver is inactive", and nothing is delivered.
+- Tests: deactivate after assignment → 403, fulfillment stays undelivered; reactivate → 200.
+
 ### [ ] T18 · POST /drivers/me/orders/:id/collect-payment
-Deps: T11, T17
+Deps: T11, T17, T17.1
 - Captures the manual payment (core `capturePaymentWorkflow`). Only after delivered.
 - Double capture → 409.
+- Decided: an inactive driver can't collect payment → 403 "Driver is inactive" (same as T17.1).
 
 ## Phase 6 — Reuse
 
