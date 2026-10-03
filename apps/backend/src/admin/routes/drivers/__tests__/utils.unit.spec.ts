@@ -49,7 +49,11 @@ describe("vehicleTypeLabel", () => {
   })
 
   it("falls back to the raw value for a type the UI does not know yet", () => {
-    expect(vehicleTypeLabel("van" as never)).toBe("van")
+    expect(vehicleTypeLabel("van")).toBe("van")
+  })
+
+  it("shows an object key such as toString as-is instead of an inherited value", () => {
+    expect(vehicleTypeLabel("toString")).toBe("toString")
   })
 })
 

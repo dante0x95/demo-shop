@@ -32,8 +32,12 @@ const VEHICLE_TYPE_LABELS: Record<DriverVehicleType, string> = {
   bicycle: "Bicycle",
 }
 
-export const vehicleTypeLabel = (type: DriverVehicleType) =>
-  VEHICLE_TYPE_LABELS[type] ?? type
+// Takes any string: the API may return a type this admin build does not know
+// yet, which is shown as-is.
+export const vehicleTypeLabel = (type: string): string =>
+  Object.prototype.hasOwnProperty.call(VEHICLE_TYPE_LABELS, type)
+    ? VEHICLE_TYPE_LABELS[type as DriverVehicleType]
+    : type
 
 export const formatDriverName = (driver: {
   first_name: string
