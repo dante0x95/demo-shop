@@ -245,6 +245,13 @@ Deps: T11, T17, T17.1
 - Captures the manual payment (core `capturePaymentWorkflow`). Only after delivered.
 - Double capture → 409.
 - Decided: an inactive driver can't collect payment → 403 "Driver is inactive" (same as T17.1).
+- Decided: "delivered" = every non-canceled fulfillment has `delivered_at`, and there is at least
+  one; otherwise 400. Canceled order → 400; unknown, unassigned or another driver's order → 404.
+- Decided: only the manual provider's (`pp_system_default`) non-canceled payment is collected,
+  for its full amount; none → 400, several pending → 400 (an admin captures them). The capture
+  records the driver id as `captured_by`. No request body.
+- Decided: response `{ order, payment }`: the order with the driver order fields (`fields`
+  narrows it) and `payment` = id, amount, currency_code, captured_at. 409 keeps its message.
 
 ## Phase 6 — Product parity (Shopify product form)
 

@@ -11,6 +11,7 @@ import {
 } from "./query-config"
 import {
   AcceptDriverInvite,
+  CollectDriverOrderPayment,
   ConfirmDriverOrderDelivery,
   CreateDriver,
   GetDriverMeParams,
@@ -64,6 +65,17 @@ export const driverRoutesMiddlewares: MiddlewareRoute[] = [
       validateAndTransformQuery(
         GetDriverOrdersParams,
         listDriverOrdersTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    method: ["POST"],
+    matcher: "/drivers/me/orders/:id/collect-payment",
+    middlewares: [
+      validateAndTransformBody(CollectDriverOrderPayment),
+      validateAndTransformQuery(
+        GetDriverOrderParams,
+        retrieveDriverOrderTransformQueryConfig
       ),
     ],
   },
