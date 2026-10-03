@@ -14,10 +14,10 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T14.1, T17.1, T20, T21, T22, T23 (API) · T25, T26, T27 (admin UI, one at a time).
+Free right now: T18, T20, T21, T22, T23 (API) · T24, T25, T26.1, T27 (admin UI, one at a time).
 Blocked outside this backlog: T07.1 (custom admin phase).
-T17.1 unblocks T18, so `/next-task` picks T17.1 first. T20-T23 have open ❓ for the plan gate.
-T19 waits on its own ❓ (one plugin or several, where to publish) and on T20, T23, T26-T28.
+T20-T23 have open ❓ for the plan gate. T14.2 waits on its ❓ (open decisions from T14.1).
+T19 waits on its own ❓ (one plugin or several, where to publish) and on T20, T23, T27, T28.
 
 Files several tasks touch (see the rules file for how to resolve a conflict):
 
@@ -27,7 +27,7 @@ Files several tasks touch (see the rules file for how to resolve a conflict):
 | `apps/backend/src/api/middlewares.ts` | T08, T10, T14, T14.1, T15, T19 |
 | `src/api/drivers/middlewares.ts` | T13, T16, T17, T18 (a chain, never in parallel), T14.1 (one public entry, sorted position) |
 | `apps/backend/src/admin/lib/` (SDK, shared hooks) | T24-T30 |
-| `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19 |
+| `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19, T26.1 |
 | `apps/backend/src/modules/brand/`, `src/workflows/brand/` | T08 (brand hook), T19 |
 
 ## Phase 1 — Brand (calibration)
@@ -178,7 +178,7 @@ Deps: T12
 Deps: T12
 - Paginated list + create.
 
-### [ ] T14.1 · Driver invitation
+### [x] T14.1 · Driver invitation
 Deps: T14 · Ships: driver invite (model + workflows), local notification provider
 - Today a driver created by an admin has no login, and can't sign up because the email is taken.
 - Decided: creating a driver from the admin (`POST /admin/drivers`) sends an invitation email
@@ -193,6 +193,20 @@ Deps: T14 · Ships: driver invite (model + workflows), local notification provid
   provider is a separate item in pendientes.md.
 - Tests: create → invite sent; accept → can log in; expired or replaced link → rejected;
   login/register with a pending invite → the "check your email" error.
+
+### [ ] T14.2 · Driver invitation follow-ups
+Deps: T14.1
+- Choices T14.1 (PR #23) made without a rule. Answer the ❓ with Dante before starting.
+- ❓ (important) The invited email already has a login with no driver linked (an abandoned
+  driver sign-up, or the same person's admin or customer login). Today accepting sets that
+  login's password and links it to the driver, which changes the password for every role that
+  shares the login. Keep it, reject the invite, or another flow?
+- ❓ An expired invitation still counts as pending: login and sign-up keep answering "check your
+  email" until an admin resends. Keep it, or let it lapse (and then what)?
+- ❓ Status codes: pending-invite errors and invalid, used or expired links are all 400. Keep?
+- ❓ Accept and resend share a lock from Medusa's default locking module, which only works inside
+  one server process. Production with several servers needs the Redis or Postgres locking
+  provider: which one, and when (a `medusa-config.ts` change)?
 
 ### [x] T15 · POST /admin/orders/:id/assign-driver
 Deps: T12 · Ships: `order ↔ driver` link, `assign-driver` workflow
@@ -217,11 +231,13 @@ Deps: T16 · Ships: `confirm-delivery` (part 1)
 - Marks the fulfillment as delivered (core flow).
 - Order not assigned to this driver → 404 (don't leak existence). Idempotent.
 
-### [ ] T17.1 · Inactive drivers can't confirm deliveries
+### [x] T17.1 · Inactive drivers can't confirm deliveries
 Deps: T17
 - Today a driver deactivated after being assigned can still confirm delivery.
 - Decided: an inactive driver (`is_active: false`) delivers nothing, so
   `POST /drivers/me/orders/:id/delivered` → 403 "Driver is inactive", and nothing is delivered.
+- Decided: the inactive check runs before the ownership check, so an inactive driver gets 403
+  for any order id, even one that isn't theirs or doesn't exist.
 - Tests: deactivate after assignment → 403, fulfillment stays undelivered; reactivate → 200.
 
 ### [ ] T18 · POST /drivers/me/orders/:id/collect-payment
@@ -280,9 +296,18 @@ Deps: T15, T17
 - Shows the assigned driver and delivery status; admin picks or changes the driver. Shows the
   API's 400 reasons (inactive driver, canceled or delivered order).
 
-### [ ] T26 · Media library page
+### [x] T26 · Media library page
 Deps: T07
 - Browse (paginated, search, type filter), upload and delete media assets.
+
+### [ ] T26.1 · Media library page follow-ups
+Deps: T26
+- Left over from T26 (PR #22).
+- The type filter lists all five types the media module supports, even when the shop allows
+  fewer through `MEDIA_ALLOWED_MIME_TYPES` (uploads of the others fail with 400). Show only the
+  allowed types, read from the module's options (media is Reusable: no hardcoded list).
+- E2E: image previews point at `localhost:9000` while the e2e server runs on 9001, so thumbnails
+  don't load in tests. Make file URLs follow the server's port in e2e and assert a thumbnail loads.
 
 ### [ ] T27 · Package presets settings page
 Deps: T10

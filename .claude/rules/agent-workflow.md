@@ -30,7 +30,8 @@ Never skip tests, use `.only`, or weaken an assertion to make it pass.
 - Open the PR with `gh pr create --reviewer @copilot` using the template below and check that
   Copilot is listed as a requested reviewer (else `gh pr edit <n> --add-reviewer @copilot`).
   Append `· PR #<n>` to your line in the board (`trabajo.md`), then STOP.
-- Review feedback = new commits on the same branch.
+- Review feedback = new commits on the same branch. Every Codex and Copilot comment gets a fix
+  (commit) or a reply with the reason; a PR with an unanswered comment is not ready to merge.
 
 ## Parallel sessions (2-3 agents at once)
 - One git worktree per session; never two sessions in the same checkout. Start each session

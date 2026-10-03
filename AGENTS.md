@@ -212,6 +212,7 @@ Before reviewing code:
 - Inspect `git status`.
 - Inspect the commits and diff between the base branch and current branch.
 - Read any task, issue, plan, or acceptance criteria referenced by the PR when available.
+- Read the PR's existing reviews and comments, including Copilot's (`gh api repos/{owner}/{repo}/pulls/<n>/reviews` and `.../comments`). Check that each earlier Codex or Copilot comment was fixed or answered with a reason; an unanswered valid one is a finding. Do not repeat a point Copilot already raised.
 - Identify the affected modules, workflows, routes, migrations, admin extensions, and tests.
 
 Useful commands include:
@@ -363,6 +364,7 @@ A PR is READY TO MERGE when:
 - acceptance criteria are implemented
 - important behavior has reasonable verification
 - no confirmed merge blocker remains
+- every earlier Codex and Copilot comment is fixed or answered with a reason
 - migrations/schema changes are safe
 - authentication and authorization are correct where relevant
 - no significant regression was identified

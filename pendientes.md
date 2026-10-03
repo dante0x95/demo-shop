@@ -23,7 +23,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Workflows
 - [x] create-product-full: producto + variantes + inventario por ubicación + marca · T08
 - [x] assign-driver: asignar repartidor a un pedido · T15
-- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T17.1 + T18 · T17 hecho, T17.1 libre, T18 tras T17.1
+- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T17.1 + T18 · T17 y T17.1 hechos, T18 libre
 
 ## Endpoints Admin
 - [x] GET/POST /admin/brands
@@ -35,7 +35,8 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] GET/POST/DELETE /admin/metafield-definitions · T09
 - [x] GET/POST/DELETE /admin/package-presets · T10
 - [x] GET/POST /admin/drivers · T14
-- [ ] Invitación de repartidores creados desde el admin (email + reenviar) · T14.1 · libre
+- [x] Invitación de repartidores creados desde el admin (email + reenviar) · T14.1
+- [ ] Invitación: decisiones pendientes (contraseña de un login compartido, invitación vencida, códigos de error, lock con varios servidores) · T14.2 · espera ❓
 - [x] POST /admin/orders/:id/assign-driver · T15
 
 ## Paridad con el formulario de producto de Shopify
@@ -47,9 +48,10 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Admin UI (panel de Medusa, temporal)
 - [x] Marcas: listado + crear
 - [x] Marcas: detalle + editar + eliminar (con productos vinculados) + e2e
-- [ ] Repartidores: listado + crear + reenviar invitación · T24 · tras T14.1
+- [ ] Repartidores: listado + crear + reenviar invitación · T24 · libre
 - [ ] Pedido: widget para asignar repartidor + estado de entrega · T25 · libre
-- [ ] Biblioteca de medios: explorar + subir + eliminar · T26 · libre
+- [x] Biblioteca de medios: explorar + subir + eliminar · T26
+- [ ] Biblioteca de medios: filtro solo con los tipos permitidos + miniaturas en e2e · T26.1 · libre
 - [ ] Paquetes predefinidos: página de ajustes · T27 · libre
 - [ ] Metafields: definiciones + valores en el producto · T28 · tras T20
 - [ ] Producto: widgets de compare-at, costo, SEO y paquete · T29 · tras T21 + T22 + T23
@@ -60,8 +62,8 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] GET /drivers/me · T13
 - [x] GET /drivers/me/orders · T16
 - [x] POST /drivers/me/orders/:id/delivered · T17
-- [ ] Repartidor inactivo no puede confirmar entregas (403) · T17.1 · libre
-- [ ] POST /drivers/me/orders/:id/collect-payment · T18 · tras T17.1
+- [x] Repartidor inactivo no puede confirmar entregas (403) · T17.1
+- [ ] POST /drivers/me/orders/:id/collect-payment · T18 · libre
 
 ## Endpoints Store (storefront + agente de WhatsApp)
 - [x] GET /store/brands
@@ -79,7 +81,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [ ] Proveedor real de email (hoy: proveedor local de Medusa, desde T14.1) · sin tarea en PLAN
 
 ## Reutilización
-- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T20, T23, T26-T28 (y sus ❓)
+- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T20, T23, T27, T28 (y sus ❓)
 
 ## Fuera del MVP
 - Colecciones automáticas, taxonomía con atributos, publicación programada,
