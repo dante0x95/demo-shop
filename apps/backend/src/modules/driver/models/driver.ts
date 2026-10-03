@@ -1,4 +1,5 @@
 import { model } from "@medusajs/framework/utils"
+import DriverInvite from "./driver-invite"
 
 export const DRIVER_VEHICLE_TYPES = ["motorcycle", "car", "bicycle"] as const
 
@@ -14,6 +15,8 @@ const Driver = model.define("driver", {
   // Self-registered drivers wait for an admin to activate them.
   is_active: model.boolean().default(false),
   metadata: model.json().nullable(),
+  // Drivers created from the admin get one; self-registered drivers don't.
+  invite: model.hasOne(() => DriverInvite, { mappedBy: "driver" }).nullable(),
 })
 
 export default Driver
