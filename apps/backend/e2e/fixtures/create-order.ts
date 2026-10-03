@@ -14,7 +14,7 @@ import { ORDER_ID_MARKER } from "./order-id-marker"
 
 const REGION_NAME = "E2E Region"
 const LOCATION_NAME = "E2E Warehouse"
-const STATES = ["pending", "canceled", "delivered"] as const
+const STATES = ["pending", "canceled", "fulfilled", "delivered"] as const
 // One unit of one item, delivered whole.
 const ITEM_QUANTITY = 1
 
@@ -22,7 +22,8 @@ type OrderState = (typeof STATES)[number]
 
 // Creates an order for E2E specs; storefront checkout isn't part of them.
 // Prints the new order's id after ORDER_ID_MARKER, for the spec to read.
-// Usage: npx medusa exec ./e2e/fixtures/create-order.ts <email> [pending|canceled|delivered]
+// Usage: npx medusa exec ./e2e/fixtures/create-order.ts <email> [pending|canceled|fulfilled|delivered]
+//   fulfilled: the order has a shipped fulfillment, not delivered yet.
 //   delivered: the order has a fulfillment with `delivered_at` set, as left by
 //   a driver confirming the delivery.
 export default async function createOrder({ container, args }: ExecArgs) {
@@ -79,18 +80,19 @@ export default async function createOrder({ container, args }: ExecArgs) {
     })
   }
 
-  if (state === "delivered") {
-    await addDeliveredFulfillment(container, order.id)
+  if (state === "fulfilled" || state === "delivered") {
+    await addFulfillment(container, order.id, state === "delivered")
   }
 
   console.log(`${ORDER_ID_MARKER}${order.id}`)
 }
 
-// What core's create-fulfillment and mark-as-delivered flows leave behind: a
-// delivered fulfillment for the order's item, linked to the order.
-const addDeliveredFulfillment = async (
+// What core's create-fulfillment (and mark-as-delivered) flows leave behind: a
+// shipped (or delivered) fulfillment for the order's item, linked to the order.
+const addFulfillment = async (
   container: ExecArgs["container"],
-  orderId: string
+  orderId: string,
+  delivered: boolean
 ) => {
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
 
@@ -126,7 +128,7 @@ const addDeliveredFulfillment = async (
       location_id: locationId,
       provider_id: "manual_manual",
       shipped_at: new Date(),
-      delivered_at: new Date(),
+      delivered_at: delivered ? new Date() : null,
       delivery_address: {},
       items: [
         {

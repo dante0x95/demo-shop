@@ -42,9 +42,13 @@ const ORDER_DRIVER_FIELDS = [
   "fulfillments.delivered_at",
 ].join(",")
 
+// Nested under the dashboard's own order detail key (["orders", "detail",
+// id, ...]): whatever the order page does that invalidates the order (mark a
+// fulfillment as delivered, cancel, ...) also refreshes the driver widget. The
+// last part keeps it apart from the dashboard's `{ query }` entries.
 export const orderDriverQueryKeys = {
-  all: ["order-driver"] as const,
-  detail: (orderId: string) => ["order-driver", orderId] as const,
+  detail: (orderId: string) =>
+    ["orders", "detail", orderId, { driver_widget: true }] as const,
 }
 
 export const retrieveOrderDriver = async (

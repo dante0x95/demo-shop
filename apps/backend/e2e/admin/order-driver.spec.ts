@@ -18,7 +18,7 @@ type Driver = {
   is_active: boolean
 }
 
-type OrderState = "pending" | "canceled" | "delivered"
+type OrderState = "pending" | "canceled" | "fulfilled" | "delivered"
 
 const suffix = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 
@@ -313,6 +313,36 @@ test.describe("Order page driver widget", () => {
 
     await expect(modal.getByRole("alert")).toHaveText(message)
     expect(message).toContain("already delivered")
+  })
+
+  test("shows the delivery as soon as the order page marks it delivered", async ({
+    page,
+  }) => {
+    const orderId = createOrder("fulfilled")
+    const driver = await createDriverViaApi(page.request)
+    expect((await assignViaApi(page.request, orderId, driver.id)).status()).toBe(
+      200
+    )
+
+    const widget = await openOrder(page, orderId)
+    await expect(widget).toContainText(fullName(driver))
+    await expect(widget).toContainText("Pending delivery")
+
+    // The dashboard's own action, while the widget stays mounted.
+    const delivered = page.waitForResponse(
+      (res) =>
+        res.url().includes("/mark-as-delivered") &&
+        res.request().method() === "POST"
+    )
+    await page.getByRole("button", { name: "Mark as delivered" }).click()
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Continue" })
+      .click()
+    expect((await delivered).status()).toBe(200)
+
+    await expect(widget).toContainText("Delivered")
+    await expect(widget).not.toContainText("Pending delivery")
   })
 
   test("shows an error with a retry when the driver fails to load", async ({
