@@ -45,12 +45,19 @@ medusaIntegrationTestRunner({
       })
     }
 
+    const setDriverActive = async (driverId: string, isActive: boolean) => {
+      const driverModuleService: DriverModuleService =
+        getContainer().resolve(DRIVER_MODULE)
+      await driverModuleService.updateDrivers({
+        id: driverId,
+        is_active: isActive,
+      })
+    }
+
     // Registers and activates a driver (only active drivers take orders).
     const createActiveDriver = async (email: string) => {
       const { driver, headers } = await createDriver(api, { email })
-      const driverModuleService: DriverModuleService =
-        getContainer().resolve(DRIVER_MODULE)
-      await driverModuleService.updateDrivers({ id: driver.id, is_active: true })
+      await setDriverActive(driver.id, true)
       return { driver, headers }
     }
 
@@ -347,20 +354,68 @@ medusaIntegrationTestRunner({
         expect(await getDeliveredQuantity(order.id)).toBe(2)
       })
 
-      it("returns 200 for a driver deactivated after assignment", async () => {
+      it("returns 403 for a driver deactivated after assignment, and 200 once reactivated", async () => {
         const { order, driver, headers } = await setup()
-        await createFulfillment(order, { shipped: true })
-        const driverModuleService: DriverModuleService =
-          getContainer().resolve(DRIVER_MODULE)
-        await driverModuleService.updateDrivers({
-          id: driver.id,
-          is_active: false,
-        })
+        const fulfillment = await createFulfillment(order, { shipped: true })
+        await setDriverActive(driver.id, false)
 
         const res = await confirm(order.id, headers)
 
-        expect(res.status).toBe(200)
+        expect(res.status).toBe(403)
+        expect(res.data.message).toBe("Driver is inactive")
+        expect((await getFulfillment(fulfillment.id)).delivered_at).toBeNull()
+        expect(await getDeliveredQuantity(order.id)).toBe(0)
+        // The order stays assigned to them.
+        expect(await getDriverId(order.id)).toBe(driver.id)
+
+        await setDriverActive(driver.id, true)
+
+        const reactivated = await confirm(order.id, headers)
+
+        expect(reactivated.status).toBe(200)
+        expect((await getFulfillment(fulfillment.id)).delivered_at).toBeTruthy()
         expect(await getDeliveredQuantity(order.id)).toBe(2)
+      })
+
+      it("returns 403 to an inactive driver even with a fulfillment_id", async () => {
+        const { order, driver, headers } = await setup()
+        const fulfillment = await createFulfillment(order, { shipped: true })
+        await setDriverActive(driver.id, false)
+
+        const res = await confirm(order.id, headers, {
+          fulfillment_id: fulfillment.id,
+        })
+
+        expect(res.status).toBe(403)
+        expect((await getFulfillment(fulfillment.id)).delivered_at).toBeNull()
+      })
+
+      it("returns 403 to an inactive driver for an already delivered order", async () => {
+        const { order, driver, headers } = await setup()
+        await createFulfillment(order, { shipped: true })
+        expect((await confirm(order.id, headers)).status).toBe(200)
+        await setDriverActive(driver.id, false)
+
+        const res = await confirm(order.id, headers)
+
+        expect(res.status).toBe(403)
+        expect(res.data.message).toBe("Driver is inactive")
+      })
+
+      // The inactive check runs before the ownership check, so an inactive
+      // driver can't use the 403/404 difference to probe order ids.
+      it("returns 403 to an inactive driver for any order id", async () => {
+        const { order } = await setup("a@test.com")
+        await createFulfillment(order, { shipped: true })
+        const other = await createActiveDriver("b@test.com")
+        await setDriverActive(other.driver.id, false)
+
+        const foreign = await confirm(order.id, other.headers)
+        const unknown = await confirm("order_unknown", other.headers)
+
+        expect(foreign.status).toBe(403)
+        expect(unknown.status).toBe(403)
+        expect(await getDeliveredQuantity(order.id)).toBe(0)
       })
 
       it("narrows the response with fields", async () => {

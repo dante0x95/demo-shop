@@ -11,6 +11,7 @@ import {
   useQueryGraphStep,
 } from "@medusajs/medusa/core-flows"
 import { resolveDeliveryFulfillmentStep } from "./steps/resolve-delivery-fulfillment"
+import { validateDriverActiveStep } from "./steps/validate-driver-active"
 
 export type ConfirmDeliveryWorkflowInput = {
   order_id: string
@@ -36,9 +37,15 @@ export const confirmDeliveryWorkflow = createWorkflow(
 
     const { data: drivers } = useQueryGraphStep({
       entity: "driver",
-      fields: ["id"],
+      fields: ["id", "is_active"],
       filters: { id: input.driver_id },
     }).config({ name: "get-driver" })
+
+    // A driver deactivated after being assigned delivers nothing (403), for
+    // any order id, so the answer doesn't depend on which orders exist.
+    validateDriverActiveStep(
+      transform({ drivers }, ({ drivers }) => ({ driver: drivers[0] }))
+    )
 
     const { data: orders } = useQueryGraphStep({
       entity: "order",
