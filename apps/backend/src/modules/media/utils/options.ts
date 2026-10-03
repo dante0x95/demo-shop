@@ -1,5 +1,6 @@
 import { MedusaError } from "@medusajs/framework/utils"
 import { SUPPORTED_IMAGE_TYPES } from "./image-types"
+import { SUPPORTED_IMAGE_MIME_TYPES } from "./mime-types"
 
 export type MediaModuleOptions = {
   max_file_size?: number
@@ -13,7 +14,9 @@ export const DEFAULT_MAX_FILE_SIZE = 5 * 1024 * 1024
 
 export const DEFAULT_MAX_FILES = 10
 
-export const DEFAULT_ALLOWED_MIME_TYPES = Object.keys(SUPPORTED_IMAGE_TYPES)
+export const DEFAULT_ALLOWED_MIME_TYPES: string[] = [
+  ...SUPPORTED_IMAGE_MIME_TYPES,
+]
 
 const assertPositiveInteger = (name: string, value: number) => {
   if (!Number.isInteger(value) || value <= 0) {

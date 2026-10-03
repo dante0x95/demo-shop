@@ -1,3 +1,5 @@
+import { SupportedImageMimeType } from "./mime-types"
+
 type ImageType = {
   extensions: string[]
   matchesSignature: (bytes: Buffer) => boolean
@@ -9,10 +11,10 @@ const startsWith = (bytes: Buffer, signature: number[], offset = 0) =>
 const asciiAt = (bytes: Buffer, offset: number, text: string) =>
   bytes.subarray(offset, offset + text.length).toString("latin1") === text
 
-// The image types the media module can verify. The signature is the fixed
-// header every file of that type starts with; it is a cheap guard against
-// mislabeled or non-image content, not a full decode.
-export const SUPPORTED_IMAGE_TYPES: Record<string, ImageType> = {
+// One entry per SUPPORTED_IMAGE_MIME_TYPES item (the type enforces it). The
+// signature is the fixed header every file of that type starts with; it is a
+// cheap guard against mislabeled or non-image content, not a full decode.
+const IMAGE_TYPES: Record<SupportedImageMimeType, ImageType> = {
   "image/jpeg": {
     extensions: [".jpg", ".jpeg"],
     matchesSignature: (bytes) => startsWith(bytes, [0xff, 0xd8, 0xff]),
@@ -39,6 +41,9 @@ export const SUPPORTED_IMAGE_TYPES: Record<string, ImageType> = {
       (asciiAt(bytes, 8, "avif") || asciiAt(bytes, 8, "avis")),
   },
 }
+
+// Looked up by any string (a request's MIME type), so unknown keys are allowed.
+export const SUPPORTED_IMAGE_TYPES: Record<string, ImageType> = IMAGE_TYPES
 
 // Bytes needed to check every signature above.
 export const SIGNATURE_LENGTH = 12
