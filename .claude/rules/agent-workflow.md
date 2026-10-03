@@ -15,8 +15,15 @@ Wait for my "go". Ask about business rules; never guess them.
 2. `npm run build`
 3. `npm run test:unit`: unit tests for new or changed code, following
    `.claude/rules/unit-tests.md`.
-4. `npm run test:integration:http`: per endpoint, test the happy path, 400 validation, 404, and 401.
-5. `npm run test:integration:modules`: for services with custom logic.
+4. `npm run test:integration:http -- <specs>`: per endpoint, test the happy path, 400 validation,
+   404, and 401.
+5. `npm run test:integration:modules -- <module paths>`: for services with custom logic.
+
+Integration tests are scoped to the task: run only the suites for the modules and endpoints it
+adds or changes (e.g. `-- integration-tests/http/drivers`, `-- src/modules/brand`), not the whole
+suite. Also run the suites of other modules when the diff changes code they depend on:
+`src/api/middlewares.ts`, links, shared workflows/steps/utils, `integration-tests/helpers`,
+`medusa-config.ts`. Name the suites you ran when you report.
 Never skip tests, use `.only`, or weaken an assertion to make it pass.
 
 ## Git workflow
