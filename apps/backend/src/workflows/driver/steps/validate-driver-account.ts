@@ -3,6 +3,10 @@ import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { DRIVER_MODULE } from "../../../modules/driver"
 import DriverModuleService from "../../../modules/driver/service"
 import { driverEmailExistsError } from "../utils/driver-email-conflict"
+import {
+  driverInvitePendingError,
+  isDriverInvitePending,
+} from "../utils/driver-invite"
 
 export type ValidateDriverAccountStepInput = {
   auth_identity: {
@@ -45,12 +49,15 @@ export const validateDriverAccountStep = createStep(
 
     const [existing] = await driverModuleService.listDrivers(
       { email },
-      { select: ["id"], take: 1 }
+      { select: ["id"], relations: ["invite"], take: 1 }
     )
 
     // An admin may have created a driver with this email (POST /admin/drivers).
+    // While its invitation is pending, point the driver to that email instead.
     if (existing) {
-      throw driverEmailExistsError()
+      throw isDriverInvitePending(existing.invite)
+        ? driverInvitePendingError()
+        : driverEmailExistsError()
     }
 
     return new StepResponse(email)
