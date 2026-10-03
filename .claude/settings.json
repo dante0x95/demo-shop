@@ -1,5 +1,16 @@
 {
   "enabledPlugins": {
     "medusa-dev@medusa": true
-  }
+  },
+"permissions": {
+  "allow": [
+    "Bash(codex exec:*)",
+    "Bash(gh pr view:*)",
+    "Bash(gh pr comment:*)",
+    "Bash(gh api:*)"
+  ],
+  "deny": [
+    "Bash(gh pr merge:*)"
+  ]
+}
 }

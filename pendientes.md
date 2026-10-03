@@ -18,24 +18,24 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 
 ## Links
 - [x] product ↔ brand
-- [ ] order ↔ driver · T15 · libre
+- [x] order ↔ driver · T15
 
 ## Workflows
-- [ ] create-product-full: producto + variantes + inventario por ubicación + marca · T08 · libre
-- [ ] assign-driver: asignar repartidor a un pedido · T15 · libre
+- [x] create-product-full: producto + variantes + inventario por ubicación + marca · T08
+- [x] assign-driver: asignar repartidor a un pedido · T15
 - [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T18 · tras T16
 
 ## Endpoints Admin
 - [x] GET/POST /admin/brands
 - [x] GET/POST/DELETE /admin/brands/:id
-- [ ] POST /admin/products/full → workflow create-product-full · T08 · libre
+- [x] POST /admin/products/full → workflow create-product-full · T08
 - [x] POST /admin/media (subir + registrar)
 - [x] GET /admin/media (biblioteca, con paginación)
 - [x] DELETE /admin/media/:id · T07
 - [x] GET/POST/DELETE /admin/metafield-definitions · T09
 - [ ] GET/POST/DELETE /admin/package-presets · T10 · libre
 - [ ] GET/POST /admin/drivers · T14 · libre
-- [ ] POST /admin/orders/:id/assign-driver · T15 · libre
+- [x] POST /admin/orders/:id/assign-driver · T15
 
 ## Admin UI (panel de Medusa, temporal)
 - [x] Marcas: listado + crear
@@ -43,8 +43,8 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 
 ## Endpoints Driver (protegidos con authenticate("driver"))
 - [x] POST /drivers (registro, junto con /auth/driver/emailpass/register)
-- [ ] GET /drivers/me · T13 · libre
-- [ ] GET /drivers/me/orders · T16 · tras T13 + T15
+- [x] GET /drivers/me · T13
+- [ ] GET /drivers/me/orders · T16 · libre
 - [ ] POST /drivers/me/orders/:id/delivered · T17 · tras T16
 - [ ] POST /drivers/me/orders/:id/collect-payment · T18 · tras T11 + T17
 
@@ -53,15 +53,15 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] GET /store/brands/:id/products
 
 ## Middlewares
-- [ ] additional_data.brand_id en creación de producto · T08 · libre
-- [ ] authenticate("driver", ["session", "bearer"]) en /drivers/me/* · T13 · libre
+- [x] additional_data.brand_id en creación de producto · T08
+- [x] authenticate("driver", ["session", "bearer"]) en /drivers/me/* · T13
 
 ## Pagos
 - [ ] Contra entrega: proveedor manual (system) habilitado en la región · T11 · libre
 - [ ] (Opcional) Payment Provider propio si hay reglas por zona o recargo · sin tarea en PLAN
 
 ## Reutilización
-- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T07 + T08 + T09 + T10
+- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T10
 
 ## Fuera del MVP
 - Colecciones automáticas, taxonomía con atributos, publicación programada,

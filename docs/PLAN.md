@@ -14,9 +14,9 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T08, T10, T11, T13, T14, T15.
+Free right now: T10, T11, T14, T16.
 Blocked outside this backlog: T07.1 (custom admin phase).
-T13 and T15 unblock the most work (T16-T18), so `/next-task` picks T13 first (plan order).
+T16 unblocks the most work (T17, T18), so `/next-task` picks T16 first.
 
 Files several tasks touch (see the rules file for how to resolve a conflict):
 
@@ -117,7 +117,7 @@ Deps: T05, custom admin phase (changes how the frontend uploads)
 
 ## Phase 3 — Shopify-style product creation
 
-### [ ] T08 · POST /admin/products/full
+### [x] T08 · POST /admin/products/full
 Deps: T02, T05 · Ships: `create-product-full` workflow, `productsCreated` brand hook
 - One request: product + options (color/size) + variants with prices + stock per location
   + brand + images (by `media_asset` id).
@@ -164,7 +164,7 @@ Deps: T01 · Ships: `driver` module, `driver` actor type
 - If `authMethodsPerActor` exists in `medusa-config.ts`, add `driver: ["emailpass"]`.
 - Test the full flow end-to-end, including login afterwards.
 
-### [ ] T13 · GET /drivers/me
+### [x] T13 · GET /drivers/me
 Deps: T12
 - `authenticate("driver", ["session","bearer"])` on `/drivers/me*`.
 - Tests: driver token → 200; admin token → 401; no token → 401.
@@ -176,7 +176,7 @@ Deps: T12
 Deps: T12
 - Paginated list + create.
 
-### [ ] T15 · POST /admin/orders/:id/assign-driver
+### [x] T15 · POST /admin/orders/:id/assign-driver
 Deps: T12 · Ships: `order ↔ driver` link, `assign-driver` workflow
 - One driver per order; reassigning replaces the previous link.
 - Canceled/completed order → 400; unknown order/driver → 404.
