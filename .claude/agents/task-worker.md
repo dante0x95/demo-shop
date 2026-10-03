@@ -14,11 +14,17 @@ Follow .claude/skills/next-task/SKILL.md and .claude/rules/agent-workflow.md, wi
       codex exec --sandbox workspace-write -c sandbox_workspace_write.network_access=true \
         -o /tmp/review-<task-id>-N.md \
         "Review PR #<n> following the 'PR Review and Merge Readiness' section of AGENTS.md.
-        This is round N of 3. Do not repeat comments from earlier rounds."
-   b. If the report says READY TO MERGE, stop the loop.
-   c. Otherwise read Codex's comments:
+        This is round N of 3. Do not repeat comments from earlier rounds.
+        Post your report on the PR as AGENTS.md says."
+   b. Check the report is on the PR: `gh pr view <n> --comments` shows a comment starting with
+      `## Codex review · round N`. If it is missing, post it yourself:
+      `gh pr comment <n> --body-file /tmp/review-<task-id>-N.md`, with that heading added as the
+      first line if the file lacks it.
+   c. If the report says READY TO MERGE, stop the loop.
+   d. Otherwise read Codex's comments:
       gh pr view <n> --comments
       gh api repos/{owner}/{repo}/pulls/<n>/comments
-   d. Fix the valid blockers as new commits, re-run the Definition of Done, push, and reply to each
+   e. Fix the valid blockers as new commits, re-run the Definition of Done, push, and reply to each
       comment: fixed (with commit) or rejected (with reason).
-4. Final report: task ID, PR link, Codex findings and what you fixed or rejected (and why).
+4. Final report: task ID, PR link, links to the Codex report comments, Codex findings and what
+   you fixed or rejected (and why).

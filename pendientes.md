@@ -13,7 +13,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] brand
 - [x] media: biblioteca de medios (media_asset)
 - [x] metafield: definiciones de campos personalizados
-- [ ] package-preset: cajas/paquetes predefinidos · T10 · libre
+- [x] package-preset: cajas/paquetes predefinidos · T10
 - [x] driver: repartidores (actor type propio)
 
 ## Links
@@ -23,7 +23,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Workflows
 - [x] create-product-full: producto + variantes + inventario por ubicación + marca · T08
 - [x] assign-driver: asignar repartidor a un pedido · T15
-- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T18 · tras T16
+- [ ] confirm-delivery: marcar entregado + capturar pago contra entrega · T17 + T18 · T17 libre, T18 tras T17
 
 ## Endpoints Admin
 - [x] GET/POST /admin/brands
@@ -33,7 +33,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] GET /admin/media (biblioteca, con paginación)
 - [x] DELETE /admin/media/:id · T07
 - [x] GET/POST/DELETE /admin/metafield-definitions · T09
-- [ ] GET/POST/DELETE /admin/package-presets · T10 · libre
+- [x] GET/POST/DELETE /admin/package-presets · T10
 - [ ] GET/POST /admin/drivers · T14 · libre
 - [x] POST /admin/orders/:id/assign-driver · T15
 
@@ -44,9 +44,9 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 ## Endpoints Driver (protegidos con authenticate("driver"))
 - [x] POST /drivers (registro, junto con /auth/driver/emailpass/register)
 - [x] GET /drivers/me · T13
-- [ ] GET /drivers/me/orders · T16 · libre
-- [ ] POST /drivers/me/orders/:id/delivered · T17 · tras T16
-- [ ] POST /drivers/me/orders/:id/collect-payment · T18 · tras T11 + T17
+- [x] GET /drivers/me/orders · T16
+- [ ] POST /drivers/me/orders/:id/delivered · T17 · libre
+- [ ] POST /drivers/me/orders/:id/collect-payment · T18 · tras T17
 
 ## Endpoints Store (storefront + agente de WhatsApp)
 - [x] GET /store/brands
@@ -57,11 +57,11 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] authenticate("driver", ["session", "bearer"]) en /drivers/me/* · T13
 
 ## Pagos
-- [ ] Contra entrega: proveedor manual (system) habilitado en la región · T11 · libre
+- [x] Contra entrega: proveedor manual (system) habilitado en la región · T11
 - [ ] (Opcional) Payment Provider propio si hay reglas por zona o recargo · sin tarea en PLAN
 
 ## Reutilización
-- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T10
+- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · libre
 
 ## Fuera del MVP
 - Colecciones automáticas, taxonomía con atributos, publicación programada,

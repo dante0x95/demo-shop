@@ -408,6 +408,17 @@ When reviewing a GitHub PR from the local Codex CLI:
 - Do not comment on speculative issues or style preferences.
 - Do not publish duplicate comments.
 
+Always publish the final review report on the PR, even when it is READY TO MERGE with no
+findings:
+
+- Post it once per review round with `gh pr comment <pr-number> --body-file <file>`.
+- Start the body with `## Codex review · round <N>` (N = the round you were given, else 1),
+  followed by the commit SHA you reviewed, then the full report from "Merge readiness"
+  (Verification Performed, Findings, Test Coverage, Merge Readiness, Confidence).
+- Inline comments for concrete findings are still posted as above; the report comment does not
+  replace them.
+- If posting fails, say so at the top of the report you return, with the error.
+
 Before posting comments, verify that `gh auth status` succeeds.
 
 Typical commands:

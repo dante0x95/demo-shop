@@ -14,9 +14,9 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T10, T11, T14, T16.
+Free right now: T14, T17, T19.
 Blocked outside this backlog: T07.1 (custom admin phase).
-T16 unblocks the most work (T17, T18), so `/next-task` picks T16 first.
+T17 unblocks T18, so `/next-task` picks T17 first.
 
 Files several tasks touch (see the rules file for how to resolve a conflict):
 
@@ -145,13 +145,13 @@ Deps: T01 · Ships: `metafield` module (Reusable)
   `options` required and unique for `select`, rejected for other types.
 - Decided: no update endpoint: list, create, GET /:id, DELETE /:id.
 
-### [ ] T10 · GET/POST/DELETE /admin/package-presets
+### [x] T10 · GET/POST/DELETE /admin/package-presets
 Deps: T01 · Ships: `package-preset` module (Reusable)
 - name, length, width, height, weight, units, is_default (only one default).
 
 ## Phase 5 — Drivers & delivery
 
-### [ ] T11 · Cash on delivery setup (no endpoint)
+### [x] T11 · Cash on delivery setup (no endpoint)
 Deps: —
 - Idempotent script in `src/scripts` enabling `pp_system_default` in the store region.
 - Test: running it twice doesn't duplicate.
@@ -189,7 +189,7 @@ Deps: T12 · Ships: `order ↔ driver` link, `assign-driver` workflow
   link's `order_id` (migration script `order-driver-unique-order`) keeps one driver per order
   under concurrent requests.
 
-### [ ] T16 · GET /drivers/me/orders
+### [x] T16 · GET /drivers/me/orders
 Deps: T13, T15
 - Only the authenticated driver's orders; paginated; filter by delivery status.
 - Test: driver A never sees driver B's orders.
