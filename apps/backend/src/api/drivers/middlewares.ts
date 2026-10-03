@@ -6,11 +6,14 @@ import {
 } from "@medusajs/framework/http"
 import {
   listDriverOrdersTransformQueryConfig,
+  retrieveDriverOrderTransformQueryConfig,
   retrieveDriverTransformQueryConfig,
 } from "./query-config"
 import {
+  ConfirmDriverOrderDelivery,
   CreateDriver,
   GetDriverMeParams,
+  GetDriverOrderParams,
   GetDriverOrdersParams,
   GetDriverParams,
 } from "./validators"
@@ -54,6 +57,17 @@ export const driverRoutesMiddlewares: MiddlewareRoute[] = [
       validateAndTransformQuery(
         GetDriverOrdersParams,
         listDriverOrdersTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    method: ["POST"],
+    matcher: "/drivers/me/orders/:id/delivered",
+    middlewares: [
+      validateAndTransformBody(ConfirmDriverOrderDelivery),
+      validateAndTransformQuery(
+        GetDriverOrderParams,
+        retrieveDriverOrderTransformQueryConfig
       ),
     ],
   },

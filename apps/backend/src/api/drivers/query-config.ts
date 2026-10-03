@@ -56,3 +56,9 @@ export const listDriverOrdersTransformQueryConfig = {
   defaultLimit: 20,
   isList: true,
 }
+
+export const retrieveDriverOrderTransformQueryConfig = {
+  defaults: defaultDriverOrderFields,
+  allowed: defaultDriverOrderFields,
+  isList: false,
+}

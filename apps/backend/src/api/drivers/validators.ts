@@ -30,6 +30,22 @@ export const GetDriverOrdersParams = z.strictObject({
 
 export type GetDriverOrdersParamsType = z.infer<typeof GetDriverOrdersParams>
 
+export const GetDriverOrderParams = z.strictObject({
+  ...createSelectParams().shape,
+})
+
+export type GetDriverOrderParamsType = z.infer<typeof GetDriverOrderParams>
+
+// `fulfillment_id` is only needed when the order has several fulfillments
+// waiting for delivery; with one, the route picks it.
+export const ConfirmDriverOrderDelivery = z.strictObject({
+  fulfillment_id: z.string().trim().min(1).optional(),
+})
+
+export type ConfirmDriverOrderDeliveryType = z.infer<
+  typeof ConfirmDriverOrderDelivery
+>
+
 // email comes from the auth identity and is_active is set by admins, so
 // neither is accepted here.
 export const CreateDriver = z.strictObject({
