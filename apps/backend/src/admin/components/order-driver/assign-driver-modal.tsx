@@ -18,16 +18,15 @@ import {
   useQueryClient,
 } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
-import { AdminDriver, driverQueryKeys, listDrivers } from "../../lib/drivers"
-import { assignOrderDriver, orderDriverQueryKeys } from "../../lib/order-driver"
 import {
   DRIVER_STATUS_FILTERS,
   DriverStatusFilter,
   formatDriverName,
   statusFilterToQuery,
   vehicleTypeLabel,
-} from "../../routes/drivers/utils"
-import { assignButtonLabel } from "./utils"
+} from "../../lib/driver-display"
+import { AdminDriver, driverQueryKeys, listDrivers } from "../../lib/drivers"
+import { assignOrderDriver, orderDriverQueryKeys } from "../../lib/order-driver"
 
 const PAGE_SIZE = 10
 
@@ -54,6 +53,7 @@ export const AssignDriverModal = ({
   })
   const [error, setError] = useState<string | null>(null)
   const queryClient = useQueryClient()
+  const actionLabel = currentDriverId ? "Change driver" : "Assign driver"
 
   const params = {
     limit: pagination.pageSize,
@@ -173,7 +173,7 @@ export const AssignDriverModal = ({
     <FocusModal open={open} onOpenChange={handleOpenChange}>
       <FocusModal.Trigger asChild>
         <Button size="small" variant="secondary">
-          {assignButtonLabel(!!currentDriverId)}
+          {actionLabel}
         </Button>
       </FocusModal.Trigger>
       <FocusModal.Content>
@@ -190,7 +190,7 @@ export const AssignDriverModal = ({
           <FocusModal.Body className="flex flex-1 flex-col items-center overflow-y-auto py-16">
             <div className="flex w-full max-w-[720px] flex-col gap-y-8">
               <div className="flex flex-col gap-y-1">
-                <Heading>{assignButtonLabel(!!currentDriverId)}</Heading>
+                <Heading>{actionLabel}</Heading>
                 <Text
                   size="small"
                   leading="compact"

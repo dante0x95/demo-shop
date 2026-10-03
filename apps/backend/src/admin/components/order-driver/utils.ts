@@ -7,7 +7,10 @@ export type OrderDeliveryStatus = "pending" | "delivered"
 // assign-driver check: an order is delivered once one of its fulfillments has
 // `delivered_at`. Until then it is pending, assigned or not.
 export const orderDeliveryStatus = (
-  fulfillments: Pick<OrderDriverFulfillment, "delivered_at">[] | null | undefined
+  fulfillments:
+    | (Pick<OrderDriverFulfillment, "delivered_at"> | null)[]
+    | null
+    | undefined
 ): OrderDeliveryStatus =>
   fulfillments?.some((fulfillment) => fulfillment?.delivered_at)
     ? "delivered"
@@ -20,6 +23,3 @@ export const DELIVERY_STATUS_BADGES: Record<
   pending: { label: "Pending delivery", color: "orange" },
   delivered: { label: "Delivered", color: "green" },
 }
-
-export const assignButtonLabel = (hasDriver: boolean) =>
-  hasDriver ? "Change driver" : "Assign driver"

@@ -10,14 +10,11 @@ import {
 } from "@medusajs/ui"
 import { useQuery } from "@tanstack/react-query"
 import { ReactNode } from "react"
+import { formatDriverName, vehicleTypeLabel } from "../lib/driver-display"
 import {
   orderDriverQueryKeys,
   retrieveOrderDriver,
 } from "../lib/order-driver"
-import {
-  formatDriverName,
-  vehicleTypeLabel,
-} from "../routes/drivers/utils"
 import { AssignDriverModal } from "../components/order-driver/assign-driver-modal"
 import {
   DELIVERY_STATUS_BADGES,

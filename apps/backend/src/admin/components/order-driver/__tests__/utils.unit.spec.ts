@@ -1,8 +1,4 @@
-import {
-  assignButtonLabel,
-  DELIVERY_STATUS_BADGES,
-  orderDeliveryStatus,
-} from "../utils"
+import { DELIVERY_STATUS_BADGES, orderDeliveryStatus } from "../utils"
 
 describe("orderDeliveryStatus", () => {
   it("is pending when the order has no fulfillments yet", () => {
@@ -38,7 +34,7 @@ describe("orderDeliveryStatus", () => {
   it("ignores null entries in the fulfillment list", () => {
     expect(
       orderDeliveryStatus([
-        null as unknown as { delivered_at: string | null },
+        null,
         { delivered_at: "2026-10-01T12:00:00.000Z" },
       ])
     ).toBe("delivered")
@@ -58,15 +54,5 @@ describe("DELIVERY_STATUS_BADGES", () => {
       label: "Delivered",
       color: "green",
     })
-  })
-})
-
-describe("assignButtonLabel", () => {
-  it("offers to assign a driver when the order has none", () => {
-    expect(assignButtonLabel(false)).toBe("Assign driver")
-  })
-
-  it("offers to change the driver when one is assigned", () => {
-    expect(assignButtonLabel(true)).toBe("Change driver")
   })
 })
