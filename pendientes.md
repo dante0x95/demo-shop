@@ -40,7 +40,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] GET/POST /admin/products/:id/seo · T22
 - [x] GET/POST /admin/drivers · T14
 - [x] Invitación de repartidores creados desde el admin (email + reenviar) · T14.1
-- [ ] Invitación: decisiones pendientes (contraseña de un login compartido, invitación vencida, códigos de error, lock con varios servidores) · T14.2 · espera ❓
+- [ ] Invitación: sin logins compartidos, invitación vencida, códigos de error, sin lock en memoria · T14.2 · libre
 - [x] POST /admin/orders/:id/assign-driver · T15
 
 ## Paridad con el formulario de producto de Shopify
@@ -53,7 +53,8 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] Marcas: listado + crear
 - [x] Marcas: detalle + editar + eliminar (con productos vinculados) + e2e
 - [x] Repartidores: listado + crear + reenviar invitación · T24
-- [ ] Pedido: widget para asignar repartidor + estado de entrega · T25 · libre
+- [x] Pedido: widget para asignar repartidor + estado de entrega · T25
+- [ ] Pedido: estado "parcialmente entregado" + botón de asignar deshabilitado · T25.1 · libre
 - [x] Biblioteca de medios: explorar + subir + eliminar · T26
 - [ ] Biblioteca de medios: filtro solo con los tipos permitidos + miniaturas en e2e · T26.1 · libre
 - [x] Paquetes predefinidos: página de ajustes · T27
@@ -86,7 +87,7 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [ ] Proveedor real de email (hoy: proveedor local de Medusa, desde T14.1) · sin tarea en PLAN
 
 ## Reutilización
-- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T20, T23, T28 (y sus ❓)
+- [ ] Extraer módulos reutilizables (brand, media, metafield, package-preset) a plugin(s) · T19 · tras T20, T23, T28
 
 ## Fuera del MVP
 - Colecciones automáticas, taxonomía con atributos, publicación programada,
