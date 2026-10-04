@@ -35,7 +35,10 @@ export const resolveMediaModuleOptions = (
   const resolved = {
     max_file_size: options.max_file_size ?? DEFAULT_MAX_FILE_SIZE,
     max_files: options.max_files ?? DEFAULT_MAX_FILES,
-    allowed_mime_types: options.allowed_mime_types ?? DEFAULT_ALLOWED_MIME_TYPES,
+    // A repeated type adds nothing, and the admin lists each type once.
+    allowed_mime_types: [
+      ...new Set(options.allowed_mime_types ?? DEFAULT_ALLOWED_MIME_TYPES),
+    ],
   }
 
   assertPositiveInteger("max_file_size", resolved.max_file_size)
