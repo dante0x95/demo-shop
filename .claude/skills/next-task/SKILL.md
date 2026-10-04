@@ -14,9 +14,11 @@ Run this at the start of a session, inside its own git worktree. Follow
 ## 1. Set up the worktree (skip what already exists)
 - `git rev-parse --show-toplevel` must not be the main checkout. If it is, stop: tell the user
   to start the session with `claude --worktree <name>`.
-- `node_modules/` missing → `npm ci --no-audit --no-fund` (installs exactly what
-  `package-lock.json` pins and never rewrites it; `npm install` would, and the change must not be
-  committed).
+- `node_modules/` missing → install one worktree at a time, so sessions started together queue
+  instead of slowing each other down (one install ~18s; five at once ~75s each):
+  `lockf -k -t 600 "$(git rev-parse --git-common-dir)/npm-ci.lock" npm ci --no-audit --no-fund`
+  (`lockf` waits for the lock; `npm ci` installs exactly what `package-lock.json` pins and never
+  rewrites it, unlike `npm install`).
 - `apps/backend/.env` missing → copy it from `<main checkout>/apps/backend/.env`.
 - `apps/backend/.env.test` missing → copy it from `<main checkout>/apps/backend/.env.test`.
   Without it the integration tests fail with `role "postgres" does not exist`.
