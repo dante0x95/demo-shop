@@ -22,14 +22,14 @@ import {
   listDrivers,
   resendDriverInvite,
 } from "../../lib/drivers"
-import { CreateDriverModal } from "./components/create-driver-modal"
 import {
   DRIVER_STATUS_FILTERS,
   DriverStatusFilter,
   formatDriverName,
   statusFilterToQuery,
   vehicleTypeLabel,
-} from "./utils"
+} from "../../lib/driver-display"
+import { CreateDriverModal } from "./components/create-driver-modal"
 
 const PAGE_SIZE = 20
 

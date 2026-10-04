@@ -18,11 +18,10 @@ import {
   DriverVehicleType,
 } from "../../../lib/drivers"
 import {
-  CreateDriverFormState,
   formatDriverName,
-  toCreateDriverPayload,
   vehicleTypeLabel,
-} from "../utils"
+} from "../../../lib/driver-display"
+import { CreateDriverFormState, toCreateDriverPayload } from "../utils"
 
 const initialState: CreateDriverFormState = {
   first_name: "",
