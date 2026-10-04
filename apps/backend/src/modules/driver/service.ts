@@ -131,6 +131,60 @@ class DriverModuleService extends MedusaService({
 
     return accepted.length > 0
   }
+
+  // Undoes issueDriverInvite when the rest of its workflow failed (e.g. the
+  // email could not be sent). Under the same driver row lock, and only while
+  // that invitation is still the driver's pending one: if a newer resend
+  // replaced it, or it was accepted, the newer state wins and the invitations
+  // it replaced stay revoked or expired, so their links never come back.
+  // Returns whether the replaced invitations were given back.
+  @InjectManager()
+  async revertIssuedDriverInvite(
+    input: { created_id: string; replaced_ids: string[] },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<boolean> {
+    return await this.revertIssuedDriverInvite_(input, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async revertIssuedDriverInvite_(
+    { created_id, replaced_ids }: { created_id: string; replaced_ids: string[] },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<boolean> {
+    const manager = sharedContext.transactionManager as SqlEntityManager
+
+    // Same lock order as issueDriverInvite (driver first), so a resend
+    // running now waits for this rollback or runs entirely before it.
+    await manager.execute(
+      `select "driver"."id" from "driver"
+       join "driver_invite" on "driver_invite"."driver_id" = "driver"."id"
+       where "driver_invite"."id" = ?
+       for update of "driver"`,
+      [created_id]
+    )
+
+    // The link was never handed out, so the row goes unless it was accepted.
+    const deleted: { status: string }[] = await manager.execute(
+      `delete from "driver_invite"
+       where "id" = ? and "status" <> 'accepted'
+       returning "status"`,
+      [created_id]
+    )
+
+    if (deleted[0]?.status !== "pending" || !replaced_ids.length) {
+      return false
+    }
+
+    await manager.execute(
+      `update "driver_invite"
+         set "status" = 'pending', "updated_at" = now()
+       where "id" in (${replaced_ids.map(() => "?").join(", ")})
+         and "status" in ('revoked', 'expired') and "deleted_at" is null`,
+      replaced_ids
+    )
+
+    return true
+  }
 }
 
 export default DriverModuleService

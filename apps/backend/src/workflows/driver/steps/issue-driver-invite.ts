@@ -57,13 +57,7 @@ export const issueDriverInviteStep = createStep(
       container.resolve(DRIVER_MODULE)
 
     // The new link was never emailed: drop it and give back the one it
-    // replaced (first, so one pending invitation per driver still holds).
-    await driverModuleService.deleteDriverInvites(compensation.created_id)
-
-    if (compensation.replaced_ids.length) {
-      await driverModuleService.updateDriverInvites(
-        compensation.replaced_ids.map((id) => ({ id, status: "pending" as const }))
-      )
-    }
+    // replaced, unless a newer resend or an acceptance has moved on since.
+    await driverModuleService.revertIssuedDriverInvite(compensation)
   }
 )

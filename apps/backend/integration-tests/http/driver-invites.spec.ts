@@ -612,6 +612,82 @@ medusaIntegrationTestRunner({
         expect((await login()).status).toBe(200)
       })
 
+      it("keeps the previous link usable when the new invitation email fails", async () => {
+        const driver = await createDriverAsAdmin()
+        const firstToken = await latestToken()
+        const notifications = notificationService()
+        const spy = jest
+          .spyOn(notifications, "createNotifications")
+          .mockRejectedValueOnce(new Error("email provider down"))
+
+        let res
+        try {
+          res = await resend(driver.id)
+        } finally {
+          spy.mockRestore()
+        }
+
+        expect(res.status).toBeGreaterThanOrEqual(500)
+        expect((await invitesOf(driver.id)).map((i) => i.status)).toEqual([
+          "pending",
+        ])
+        const accepted = await accept({ token: firstToken, password: PASSWORD })
+        expect(accepted.status).toBe(200)
+      })
+
+      it("does not bring back a replaced link when an older resend fails after a newer one was accepted", async () => {
+        const driver = await createDriverAsAdmin()
+        const originalToken = await latestToken()
+
+        // Resend A stops at its email; resend B runs and is accepted; then A's
+        // email fails and A's workflow rolls back.
+        const notifications = notificationService()
+        const create = notifications.createNotifications.bind(notifications)
+        const emailReached = deferred()
+        const failEmail = deferred()
+        let calls = 0
+        const spy = jest
+          .spyOn(notifications, "createNotifications")
+          .mockImplementation((async (...args: any[]) => {
+            if (++calls === 1) {
+              emailReached.resolve()
+              await failEmail.promise
+              throw new Error("email provider down")
+            }
+            return (create as any)(...args)
+          }) as any)
+
+        let resendA
+        try {
+          resendA = resend(driver.id)
+          await emailReached.promise
+
+          expect((await resend(driver.id)).status).toBe(201)
+          const tokenB = await latestToken()
+          expect((await accept({ token: tokenB, password: PASSWORD })).status)
+            .toBe(200)
+
+          failEmail.resolve()
+          expect((await resendA).status).toBeGreaterThanOrEqual(500)
+        } finally {
+          failEmail.resolve()
+          await resendA
+          spy.mockRestore()
+        }
+
+        expect((await invitesOf(driver.id)).map((i) => i.status)).toEqual([
+          "revoked",
+          "accepted",
+        ])
+        const original = await accept({
+          token: originalToken,
+          password: "original-link",
+        })
+        expect(original.status).toBe(410)
+        expect(original.data.message).toBe(REPLACED_LINK_MESSAGE)
+        expect((await login()).status).toBe(200)
+      })
+
       it("keeps one pending invitation when resends run concurrently", async () => {
         const driver = await createDriverAsAdmin()
 

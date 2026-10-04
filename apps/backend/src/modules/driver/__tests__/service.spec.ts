@@ -144,6 +144,120 @@ moduleIntegrationTestRunner<DriverModuleService>({
       })
     })
 
+    describe("revertIssuedDriverInvite", () => {
+      const statuses = async () =>
+        (
+          await service.listDriverInvites(
+            { driver_id: driverId },
+            { order: { created_at: "ASC" } }
+          )
+        ).map((invite) => invite.status)
+
+      it("removes a first invitation that nothing replaced", async () => {
+        const { invite, replaced_ids } = await issue()
+
+        expect(
+          await service.revertIssuedDriverInvite({
+            created_id: invite.id,
+            replaced_ids,
+          })
+        ).toBe(false)
+        expect(await statuses()).toEqual([])
+      })
+
+      it("gives back the invitation it replaced while it is still the pending one", async () => {
+        const first = await issue()
+        const second = await issue()
+
+        expect(
+          await service.revertIssuedDriverInvite({
+            created_id: second.invite.id,
+            replaced_ids: second.replaced_ids,
+          })
+        ).toBe(true)
+        expect(await statusOf(first.invite.id)).toBe("pending")
+        expect(await statuses()).toEqual(["pending"])
+      })
+
+      it("gives back an expired invitation as it was (still reads as expired)", async () => {
+        const first = await issue({ expires_at: NOW })
+        const second = await issue()
+
+        await service.revertIssuedDriverInvite({
+          created_id: second.invite.id,
+          replaced_ids: second.replaced_ids,
+        })
+
+        const restored = await service.retrieveDriverInvite(first.invite.id)
+        expect(restored.status).toBe("pending")
+        expect(await service.acceptPendingDriverInvite(first.invite.id, NOW))
+          .toBe(false)
+      })
+
+      it("does nothing when compensation is retried after a newer resend", async () => {
+        const first = await issue()
+        const second = await issue()
+        const compensation = {
+          created_id: second.invite.id,
+          replaced_ids: second.replaced_ids,
+        }
+
+        expect(await service.revertIssuedDriverInvite(compensation)).toBe(true)
+        const third = await issue()
+
+        expect(await service.revertIssuedDriverInvite(compensation)).toBe(false)
+        expect(await statusOf(first.invite.id)).toBe("revoked")
+        expect(await statusOf(third.invite.id)).toBe("pending")
+        expect(await statuses()).toEqual(["revoked", "pending"])
+      })
+
+      it("never brings a link back once a newer resend replaced this one", async () => {
+        const first = await issue()
+        const second = await issue()
+        const third = await issue()
+
+        expect(
+          await service.revertIssuedDriverInvite({
+            created_id: second.invite.id,
+            replaced_ids: second.replaced_ids,
+          })
+        ).toBe(false)
+        expect(await statusOf(first.invite.id)).toBe("revoked")
+        expect(await statusOf(third.invite.id)).toBe("pending")
+        expect(await statuses()).toEqual(["revoked", "pending"])
+      })
+
+      it("never brings a link back once a newer invitation was accepted", async () => {
+        const first = await issue()
+        const second = await issue()
+        const third = await issue()
+        await service.acceptPendingDriverInvite(third.invite.id, NOW)
+
+        await service.revertIssuedDriverInvite({
+          created_id: second.invite.id,
+          replaced_ids: second.replaced_ids,
+        })
+
+        expect(await statusOf(first.invite.id)).toBe("revoked")
+        expect(await statuses()).toEqual(["revoked", "accepted"])
+      })
+
+      it("keeps an invitation that was accepted", async () => {
+        const first = await issue()
+        const second = await issue()
+        await service.acceptPendingDriverInvite(second.invite.id, NOW)
+
+        expect(
+          await service.revertIssuedDriverInvite({
+            created_id: second.invite.id,
+            replaced_ids: second.replaced_ids,
+          })
+        ).toBe(false)
+        expect(await statusOf(first.invite.id)).toBe("revoked")
+        expect(await statusOf(second.invite.id)).toBe("accepted")
+      })
+    })
+
     describe("acceptPendingDriverInvite", () => {
       it("accepts a pending, unexpired invitation once", async () => {
         const { invite } = await issue()
