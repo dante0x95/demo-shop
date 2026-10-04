@@ -3,10 +3,12 @@ import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { METAFIELD_MODULE } from "../../../modules/metafield"
 import { MetafieldType } from "../../../modules/metafield/models/metafield-definition"
 import MetafieldModuleService from "../../../modules/metafield/service"
+import { findMetafieldReconnectConflict } from "../../../modules/metafield/utils/values"
 import {
   hasMetafieldDefinitionConflict,
   metafieldDefinitionConflictError,
 } from "../utils/metafield-definition-conflict"
+import { assertOwnerTypeAllowed } from "../utils/owner-type"
 
 export type ValidateMetafieldDefinitionStepInput = {
   key: string
@@ -27,13 +29,7 @@ export const validateMetafieldDefinitionStep = createStep(
     const metafieldModuleService: MetafieldModuleService =
       container.resolve(METAFIELD_MODULE)
 
-    const { owner_types } = await metafieldModuleService.getOptions()
-
-    if (!owner_types.includes(input.owner_type)) {
-      throw invalid(
-        `Owner type ${input.owner_type} is not allowed. Allowed owner types: ${owner_types.join(", ")}`
-      )
-    }
+    await assertOwnerTypeAllowed(metafieldModuleService, input.owner_type)
 
     const options = input.options ?? null
 
@@ -53,6 +49,22 @@ export const validateMetafieldDefinitionStep = createStep(
 
     if (await hasMetafieldDefinitionConflict(metafieldModuleService, input)) {
       throw metafieldDefinitionConflictError(input)
+    }
+
+    // Values kept from a deleted definition with this owner type and key are
+    // reconnected to the new one, so they must fit it.
+    const existingValues = await metafieldModuleService.listMetafieldValues(
+      { owner_type: input.owner_type, key: input.key },
+      { select: ["type", "value"] }
+    )
+
+    const reconnectConflict = findMetafieldReconnectConflict(
+      { key: input.key, type: input.type, options },
+      existingValues
+    )
+
+    if (reconnectConflict) {
+      throw new MedusaError(MedusaError.Types.CONFLICT, reconnectConflict)
     }
 
     return new StepResponse(undefined)
