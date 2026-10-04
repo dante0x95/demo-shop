@@ -17,6 +17,7 @@ import {
 } from "../lib/order-driver"
 import { AssignDriverModal } from "../components/order-driver/assign-driver-modal"
 import {
+  assignDriverBlockedReason,
   DELIVERY_STATUS_BADGES,
   orderDeliveryStatus,
 } from "../components/order-driver/utils"
@@ -57,6 +58,7 @@ const OrderDriverWidget = ({
             orderId={data.id}
             orderDisplayId={data.display_id}
             currentDriverId={driver?.id ?? null}
+            disabledReason={assignDriverBlockedReason(data)}
           />
         )}
       </div>

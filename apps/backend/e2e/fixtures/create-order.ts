@@ -14,18 +14,38 @@ import { ORDER_ID_MARKER } from "./order-id-marker"
 
 const REGION_NAME = "E2E Region"
 const LOCATION_NAME = "E2E Warehouse"
-const STATES = ["pending", "canceled", "fulfilled", "delivered"] as const
-// One unit of one item, delivered whole.
+const STATES = [
+  "pending",
+  "canceled",
+  "completed",
+  "fulfilled",
+  "delivered",
+  "partially_delivered",
+  "delivered_with_canceled",
+] as const
+// One unit per item, each item in its own fulfillment.
 const ITEM_QUANTITY = 1
 
 type OrderState = (typeof STATES)[number]
 
+const ITEMS = ["E2E Shirt", "E2E Socks"]
+const itemCount = (state: OrderState) =>
+  state === "partially_delivered" || state === "delivered_with_canceled"
+    ? 2
+    : 1
+
 // Creates an order for E2E specs; storefront checkout isn't part of them.
 // Prints the new order's id after ORDER_ID_MARKER, for the spec to read.
-// Usage: npx medusa exec ./e2e/fixtures/create-order.ts <email> [pending|canceled|fulfilled|delivered]
+// Usage: npx medusa exec ./e2e/fixtures/create-order.ts <email> [state]
+//   state: pending (default) | canceled | completed | fulfilled | delivered |
+//          partially_delivered | delivered_with_canceled
+//   completed: the order is completed (a status that takes no driver).
 //   fulfilled: the order has a shipped fulfillment, not delivered yet.
 //   delivered: the order has a fulfillment with `delivered_at` set, as left by
 //   a driver confirming the delivery.
+//   partially_delivered: two items in two fulfillments, only one delivered.
+//   delivered_with_canceled: a delivered fulfillment plus a second, canceled
+//   one (which doesn't count towards the delivery).
 export default async function createOrder({ container, args }: ExecArgs) {
   const [email, state = "pending"] = args
 
@@ -70,7 +90,11 @@ export default async function createOrder({ container, args }: ExecArgs) {
         postal_code: "12345",
         country_code: "us",
       },
-      items: [{ title: "E2E Shirt", quantity: ITEM_QUANTITY, unit_price: 20 }],
+      items: ITEMS.slice(0, itemCount(state as OrderState)).map((title) => ({
+        title,
+        quantity: ITEM_QUANTITY,
+        unit_price: 20,
+      })),
     },
   })
 
@@ -80,8 +104,27 @@ export default async function createOrder({ container, args }: ExecArgs) {
     })
   }
 
+  if (state === "completed") {
+    await container.resolve(Modules.ORDER).completeOrder([order.id])
+  }
+
   if (state === "fulfilled" || state === "delivered") {
-    await addFulfillment(container, order.id, state === "delivered")
+    await addFulfillment(container, order.id, ITEMS[0], {
+      delivered: state === "delivered",
+    })
+  }
+
+  if (state === "partially_delivered") {
+    await addFulfillment(container, order.id, ITEMS[0], { delivered: true })
+    await addFulfillment(container, order.id, ITEMS[1], { delivered: false })
+  }
+
+  if (state === "delivered_with_canceled") {
+    await addFulfillment(container, order.id, ITEMS[0], { delivered: true })
+    await addFulfillment(container, order.id, ITEMS[1], {
+      delivered: false,
+      canceled: true,
+    })
   }
 
   console.log(`${ORDER_ID_MARKER}${order.id}`)
@@ -92,7 +135,8 @@ export default async function createOrder({ container, args }: ExecArgs) {
 const addFulfillment = async (
   container: ExecArgs["container"],
   orderId: string,
-  delivered: boolean
+  itemTitle: string,
+  { delivered, canceled = false }: { delivered: boolean; canceled?: boolean }
 ) => {
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
 
@@ -100,10 +144,10 @@ const addFulfillment = async (
     data: [order],
   } = await query.graph({
     entity: "order",
-    fields: ["id", "items.id"],
+    fields: ["id", "items.id", "items.title"],
     filters: { id: orderId },
   })
-  const [item] = order.items!
+  const item = order.items!.find((i) => i!.title === itemTitle)!
   const quantity = ITEM_QUANTITY
 
   const {
@@ -129,14 +173,15 @@ const addFulfillment = async (
       provider_id: "manual_manual",
       shipped_at: new Date(),
       delivered_at: delivered ? new Date() : null,
+      canceled_at: canceled ? new Date() : null,
       delivery_address: {},
       items: [
         {
-          title: "E2E Shirt",
-          sku: "E2E-SHIRT",
+          title: itemTitle,
+          sku: itemTitle.toUpperCase().replace(/ /g, "-"),
           quantity,
           barcode: "",
-          line_item_id: item!.id,
+          line_item_id: item.id,
         },
       ],
       labels: [],
@@ -151,6 +196,6 @@ const addFulfillment = async (
     order_id: orderId,
     reference: Modules.FULFILLMENT,
     reference_id: fulfillment.id,
-    items: [{ id: item!.id, quantity }],
+    items: [{ id: item.id, quantity }],
   })
 }

@@ -30,14 +30,22 @@ Never skip tests, use `.only`, or weaken an assertion to make it pass.
 - One task from `docs/PLAN.md` = one branch = one PR. Never start the next task in the same session.
 - Branch from up-to-date `main`: `feat/<task-id>-<slug>` (e.g. `feat/T05-media-upload`).
 - Small conventional commits: `feat(media): add media_asset model`.
-- Never push to `main`, merge a PR, force-push, or rewrite history. Merging `origin/main` into
+- Never push to `main`, force-push, or rewrite history. Merging `origin/main` into
   your own task branch is allowed (see below).
+- Merge a PR only when Dante asked for it and it is ready: the latest Codex review covers the
+  current code and says READY TO MERGE, and every Codex and Copilot comment has a fix or a reply
+  (a Copilot review that only reports its quota limit does not block). Merge only with
+  `scripts/merge-pr.sh <worktree> <pr> [e2e spec filters]`, never `gh pr merge` directly: it
+  merges `origin/main` into the branch, runs build, tsc, unit, all integration suites and the
+  given e2e specs, pushes, then merges, one PR at a time under a repo-wide lock.
 - Task PRs never edit `pendientes.md`, nor status in `docs/PLAN.md` (`[ ]`/`[x]` headings,
   "Free right now"). Dante reconciles both by hand after merges. A task may only add its
   plan-gate decisions (`Decided:` bullets) inside its own section of `docs/PLAN.md`.
 - Before opening the PR: `git merge origin/main`, then re-run the Definition of Done.
-- Open the PR with `gh pr create --reviewer @copilot` using the template below and check that
-  Copilot is listed as a requested reviewer (else `gh pr edit <n> --add-reviewer @copilot`).
+- Open the PR as a draft with `gh pr create --draft`, using the template below. Codex reviews it
+  first. Mark it ready (`gh pr ready <n>`) only after Codex's review is done: the repo ruleset
+  skips drafts, so that is what starts Copilot's review (if the PR timeline shows no Copilot
+  review request, `gh pr edit <n> --add-reviewer @copilot`).
   Append `· PR #<n>` to your line in the board (`trabajo.md`), then STOP.
 - Review feedback = new commits on the same branch. Every Codex and Copilot comment gets a fix
   (commit) or a reply with the reason; a PR with an unanswered comment is not ready to merge.

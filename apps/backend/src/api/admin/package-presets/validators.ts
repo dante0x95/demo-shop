@@ -49,6 +49,16 @@ export type AdminCreatePackagePresetType = z.infer<
   typeof AdminCreatePackagePreset
 >
 
+// `package_preset_id` is required: a preset id picks it for the product, null
+// removes the product's preset so the store's default applies again.
+export const AdminSetProductPackagePreset = z.strictObject({
+  package_preset_id: z.string().trim().min(1).nullable(),
+})
+
+export type AdminSetProductPackagePresetType = z.infer<
+  typeof AdminSetProductPackagePreset
+>
+
 // Nothing to send: the preset in the path becomes the default.
 export const AdminSetDefaultPackagePreset = z.strictObject({})
 

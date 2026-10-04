@@ -1,8 +1,14 @@
+import { DeleteEntityInput } from "@medusajs/framework/modules-sdk"
 import {
   createWorkflow,
+  transform,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
-import { useQueryGraphStep } from "@medusajs/medusa/core-flows"
+import {
+  removeRemoteLinkStep,
+  useQueryGraphStep,
+} from "@medusajs/medusa/core-flows"
+import { PACKAGE_PRESET_MODULE } from "../../modules/package-preset"
 import { deletePackagePresetStep } from "./steps/delete-package-preset"
 
 export type DeletePackagePresetWorkflowInput = {
@@ -23,6 +29,14 @@ export const deletePackagePresetWorkflow = createWorkflow(
     })
 
     deletePackagePresetStep(input.id)
+
+    // Products that used this preset are unlinked (never deleted), so the
+    // store's default preset applies to them again.
+    removeRemoteLinkStep(
+      transform({ input }, ({ input }): DeleteEntityInput => ({
+        [PACKAGE_PRESET_MODULE]: { package_preset_id: input.id },
+      }))
+    )
 
     return new WorkflowResponse(input.id)
   }

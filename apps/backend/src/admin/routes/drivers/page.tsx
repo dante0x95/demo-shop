@@ -62,7 +62,7 @@ const DriversPage = () => {
     onSuccess: ({ driver }) => {
       toast.success(`Invitation sent to ${driver.email}`)
     },
-    // A 400 explains that the driver already has a login.
+    // A 409 explains that the driver already has a login.
     onError: (err: Error) => {
       toast.error(err.message || "Failed to resend the invitation")
     },
