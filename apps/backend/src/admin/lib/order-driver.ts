@@ -15,6 +15,7 @@ export type OrderDriver = Pick<
 export type OrderDriverFulfillment = {
   id: string
   delivered_at: string | null
+  canceled_at: string | null
 }
 
 // The parts of an order the driver widget shows. `driver` comes from the
@@ -40,6 +41,7 @@ const ORDER_DRIVER_FIELDS = [
   "driver.is_active",
   "fulfillments.id",
   "fulfillments.delivered_at",
+  "fulfillments.canceled_at",
 ].join(",")
 
 // Nested under the dashboard's own order detail key (["orders", "detail",
