@@ -9,6 +9,7 @@ import {
   StatusBadge,
   Text,
   toast,
+  Tooltip,
   useDataTable,
 } from "@medusajs/ui"
 import {
@@ -36,12 +37,16 @@ type AssignDriverModalProps = {
   orderId: string
   orderDisplayId: number
   currentDriverId: string | null
+  // Set when the API would refuse any driver; the button is disabled and
+  // shows it as a tooltip.
+  disabledReason?: string | null
 }
 
 export const AssignDriverModal = ({
   orderId,
   orderDisplayId,
   currentDriverId,
+  disabledReason = null,
 }: AssignDriverModalProps) => {
   const [open, setOpen] = useState(false)
   // Only active drivers can take orders, so they are listed first. The other
@@ -171,11 +176,22 @@ export const AssignDriverModal = ({
 
   return (
     <FocusModal open={open} onOpenChange={handleOpenChange}>
-      <FocusModal.Trigger asChild>
-        <Button size="small" variant="secondary">
-          {actionLabel}
-        </Button>
-      </FocusModal.Trigger>
+      {disabledReason ? (
+        <Tooltip content={disabledReason}>
+          {/* A disabled button gets no hover events, so the span carries them. */}
+          <span tabIndex={0} data-testid="assign-driver-disabled">
+            <Button size="small" variant="secondary" disabled>
+              {actionLabel}
+            </Button>
+          </span>
+        </Tooltip>
+      ) : (
+        <FocusModal.Trigger asChild>
+          <Button size="small" variant="secondary">
+            {actionLabel}
+          </Button>
+        </FocusModal.Trigger>
+      )}
       <FocusModal.Content>
         <div className="flex h-full flex-col overflow-hidden">
           <FocusModal.Header>
