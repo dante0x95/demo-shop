@@ -341,7 +341,7 @@ test.describe("Admin drivers page", () => {
         res.request().method() === "POST"
     )
     await prompt.getByRole("button", { name: "Resend" }).click()
-    expect((await resent).status()).toBe(200)
+    expect((await resent).status()).toBe(201)
 
     await expect(
       page.getByText(`Invitation sent to ${driver.email}`)

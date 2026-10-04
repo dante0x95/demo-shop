@@ -45,6 +45,9 @@ module.exports = defineConfig({
       resolve: './src/modules/seo',
     },
     {
+      resolve: './src/modules/variant-pricing',
+    },
+    {
       // Medusa's default local provider (logs instead of sending), extended
       // from "feed" to "email" for driver invitations until a real email
       // provider is set up.
