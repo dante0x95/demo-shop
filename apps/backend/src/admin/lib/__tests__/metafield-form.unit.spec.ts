@@ -3,12 +3,14 @@ import {
   buildProductMetafieldFields,
   CreateMetafieldDefinitionFormState,
   formatMetafieldValue,
+  fromSelectItemValue,
   ownerTypeLabel,
   parseSelectOptions,
   ProductMetafieldField,
   suggestMetafieldKey,
   toCreateMetafieldDefinitionPayload,
   toMetafieldInputValue,
+  toSelectItemValue,
 } from "../metafield-form"
 
 // The API's key rule (validators.ts of /admin/metafield-definitions).
@@ -252,6 +254,36 @@ describe("toMetafieldInputValue", () => {
     expect(toMetafieldInputValue(false)).toBe("false")
     expect(toMetafieldInputValue(0)).toBe("0")
     expect(toMetafieldInputValue("Linen")).toBe("Linen")
+  })
+})
+
+describe("toSelectItemValue and fromSelectItemValue", () => {
+  it("round-trip no value", () => {
+    expect(fromSelectItemValue(toSelectItemValue(""))).toBe("")
+  })
+
+  it("round-trip ordinary options", () => {
+    for (const option of ["Cotton", "true", "false", " spaced "]) {
+      expect(fromSelectItemValue(toSelectItemValue(option))).toBe(option)
+    }
+  })
+
+  // Regression: an option equal to the "no value" item's value was read as
+  // "no value", so choosing it deleted the product's value.
+  it("never read an option as no value, whatever its text", () => {
+    const noValue = toSelectItemValue("")
+
+    for (const option of [noValue, "__no_value__", "none", "option:", "option:x"]) {
+      expect(toSelectItemValue(option)).not.toBe(noValue)
+      expect(fromSelectItemValue(toSelectItemValue(option))).toBe(option)
+    }
+  })
+
+  it("give every option its own item value", () => {
+    const options = ["none", "option:none", "A", "option:A"]
+    const items = options.map(toSelectItemValue)
+
+    expect(new Set(items).size).toBe(options.length)
   })
 })
 

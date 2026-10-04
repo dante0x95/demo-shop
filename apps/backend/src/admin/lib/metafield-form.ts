@@ -146,6 +146,20 @@ export const formatMetafieldValue = (
   return String(value)
 }
 
+// A select item can't have an empty value, and any text can be one of a
+// definition's options. Options get a prefix, so "no value" never collides
+// with one.
+const NO_VALUE_ITEM = "none"
+const OPTION_ITEM_PREFIX = "option:"
+
+export const toSelectItemValue = (input: string) =>
+  input ? `${OPTION_ITEM_PREFIX}${input}` : NO_VALUE_ITEM
+
+export const fromSelectItemValue = (item: string) =>
+  item.startsWith(OPTION_ITEM_PREFIX)
+    ? item.slice(OPTION_ITEM_PREFIX.length)
+    : ""
+
 // What a form input holds for a value: text for every type, "true" or
 // "false" for a boolean, and "" for no value.
 export const toMetafieldInputValue = (value: MetafieldValueData | null) =>

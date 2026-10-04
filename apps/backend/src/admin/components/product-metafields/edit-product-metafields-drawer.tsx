@@ -13,18 +13,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { FormEvent, useEffect, useState } from "react"
 import {
   buildProductMetafieldChanges,
+  fromSelectItemValue,
   METAFIELD_TYPE_LABELS,
   ProductMetafieldField,
   toMetafieldInputValue,
+  toSelectItemValue,
 } from "../../lib/metafield-form"
 import {
   deleteProductMetafield,
   metafieldQueryKeys,
   setProductMetafields,
 } from "../../lib/metafields"
-
-// Radix Select items can't have an empty value.
-const NO_VALUE = "__no_value__"
 
 const toInputs = (fields: ProductMetafieldField[]) =>
   Object.fromEntries(
@@ -58,17 +57,20 @@ const FieldInput = ({
 
     return (
       <Select
-        value={value || NO_VALUE}
-        onValueChange={(next) => onChange(next === NO_VALUE ? "" : next)}
+        value={toSelectItemValue(value)}
+        onValueChange={(next) => onChange(fromSelectItemValue(next))}
         disabled={disabled}
       >
         <Select.Trigger id={id}>
           <Select.Value />
         </Select.Trigger>
         <Select.Content>
-          <Select.Item value={NO_VALUE}>No value</Select.Item>
+          <Select.Item value={toSelectItemValue("")}>No value</Select.Item>
           {options.map((option) => (
-            <Select.Item key={option.value} value={option.value}>
+            <Select.Item
+              key={option.value}
+              value={toSelectItemValue(option.value)}
+            >
               {option.label}
             </Select.Item>
           ))}

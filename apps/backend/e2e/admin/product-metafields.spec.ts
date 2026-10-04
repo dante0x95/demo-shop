@@ -28,7 +28,8 @@ const pickOption = async (page: Page, combobox: string, option: string) => {
 const saveDrawer = async (page: Page) => {
   const drawer = page.getByRole("dialog")
   await drawer.getByRole("button", { name: "Save" }).click()
-  await expect(page.getByText("Metafields updated")).toBeVisible()
+  // Earlier saves in the same test may still show their toast.
+  await expect(page.getByText("Metafields updated").last()).toBeVisible()
   await expect(drawer).toBeHidden()
 }
 
@@ -139,6 +140,44 @@ test.describe("Product metafields widget", () => {
     await page.getByRole("combobox", { name: `Size ${key}` }).click()
 
     await expect(page.getByRole("option")).toHaveText(["No value", "S", "M"])
+  })
+
+  // Regression: an option equal to the "No value" item's value was saved as
+  // a removal.
+  test("saves an option whose text looks like the no-value item", async ({
+    page,
+  }) => {
+    const key = uniqueKey("tricky")
+    const options = ["Cotton", "__no_value__", "none"]
+    await createDefinitionViaApi(page.request, {
+      key,
+      label: `Tricky ${key}`,
+      type: "select",
+      options,
+    })
+    const product = await createProductViaApi(page.request, `Tricky ${key}`)
+    await setProductMetafieldsViaApi(page.request, product.id, [
+      { key, value: "Cotton" },
+    ])
+
+    await page.goto(`/app/products/${product.id}`)
+
+    for (const option of ["__no_value__", "none"]) {
+      await openDrawer(page)
+      await pickOption(page, `Tricky ${key}`, option)
+      await saveDrawer(page)
+
+      await expect(fieldRow(page, key)).toContainText(option)
+      const values = await listProductMetafieldsViaApi(page.request, product.id)
+      expect(values.map(({ key, value }) => [key, value])).toEqual([
+        [key, option],
+      ])
+    }
+
+    await openDrawer(page)
+    await pickOption(page, `Tricky ${key}`, "No value")
+    await saveDrawer(page)
+    expect(await listProductMetafieldsViaApi(page.request, product.id)).toEqual([])
   })
 
   test("removes the values of emptied fields", async ({ page }) => {
