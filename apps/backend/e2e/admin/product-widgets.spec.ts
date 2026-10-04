@@ -192,16 +192,21 @@ test.describe("Product page: compare-at price and cost widget", () => {
         req.method() === "POST"
     )
     await drawer.getByRole("button", { name: "Save" }).click()
-    expect((await saved).postDataJSON()).toEqual({
-      variants: [
+    // Variants created together can come back in either order, and the API
+    // doesn't care about it: compare the payload per variant.
+    const { variants } = (await saved).postDataJSON()
+    expect(variants).toHaveLength(2)
+    expect(variants).toEqual(
+      expect.arrayContaining([
         {
           variant_id: variantId(product, "S"),
           compare_at_amount: 80,
           cost_amount: 20.5,
         },
+        // Only the changed field is sent.
         { variant_id: variantId(product, "M"), compare_at_amount: 15 },
-      ],
-    })
+      ])
+    )
 
     await expect(page.getByText("Compare-at prices and costs updated")).toBeVisible()
     await expect(drawer).toBeHidden()
