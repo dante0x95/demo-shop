@@ -18,7 +18,14 @@ type Driver = {
   is_active: boolean
 }
 
-type OrderState = "pending" | "canceled" | "fulfilled" | "delivered"
+type OrderState =
+  | "pending"
+  | "canceled"
+  | "completed"
+  | "fulfilled"
+  | "delivered"
+  | "partially_delivered"
+  | "delivered_with_canceled"
 
 const suffix = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 
@@ -101,6 +108,37 @@ const apiAssignErrorMessage = async (
   const res = await assignViaApi(request, orderId, driverId)
   expect(res.status()).toBe(400)
   return (await res.json()).message as string
+}
+
+// The dashboard's own "Mark as delivered" call, through the API.
+const markDeliveredViaApi = async (
+  request: APIRequestContext,
+  orderId: string
+) => {
+  const res = await request.get(`/admin/orders/${orderId}`, {
+    params: { fields: "id,fulfillments.id" },
+  })
+  const { order } = await res.json()
+  for (const fulfillment of order.fulfillments) {
+    const done = await request.post(
+      `/admin/orders/${orderId}/fulfillments/${fulfillment.id}/mark-as-delivered`,
+      { data: {} }
+    )
+    expect(done.status()).toBe(200)
+  }
+}
+
+// The button is disabled and hovering it explains why.
+const expectAssignDisabled = async (
+  page: Page,
+  widget: Locator,
+  button: string,
+  reason: string
+) => {
+  const trigger = widget.getByRole("button", { name: button })
+  await expect(trigger).toBeDisabled()
+  await widget.getByTestId("assign-driver-disabled").hover()
+  await expect(page.getByRole("tooltip")).toContainText(reason)
 }
 
 const fullName = (driver: Driver) => `${driver.first_name} ${driver.last_name}`
@@ -274,45 +312,101 @@ test.describe("Order page driver widget", () => {
     await expect(widget).toContainText("No driver assigned")
   })
 
-  test("shows the API error for a canceled order", async ({ page }) => {
-    const orderId = createOrder("canceled")
-    const driver = await createDriverViaApi(page.request)
-    const message = await apiAssignErrorMessage(
-      page.request,
-      orderId,
-      driver.id
-    )
-
-    const widget = await openOrder(page, orderId)
-    const modal = await openPicker(page, widget, "Assign driver")
-    const response = await assignFromPicker(page, modal, driver)
-    expect(response.status()).toBe(400)
-
-    await expect(modal.getByRole("alert")).toHaveText(message)
-    expect(message).toContain("canceled")
-  })
-
-  test("shows a delivered order and the API error when changing its driver", async ({
+  test("disables the button with a reason on a canceled order", async ({
     page,
   }) => {
-    const orderId = createOrder("delivered")
+    const orderId = createOrder("canceled")
     const driver = await createDriverViaApi(page.request)
-    const message = await apiAssignErrorMessage(
-      page.request,
-      orderId,
-      driver.id
+    // The tooltip says what the API would answer.
+    expect((await assignViaApi(page.request, orderId, driver.id)).status()).toBe(
+      400
     )
 
     const widget = await openOrder(page, orderId)
-    await expect(widget).toContainText("Delivered")
-    await expect(widget).not.toContainText("Pending delivery")
 
-    const modal = await openPicker(page, widget, "Assign driver")
-    const response = await assignFromPicker(page, modal, driver)
-    expect(response.status()).toBe(400)
+    await expectAssignDisabled(page, widget, "Assign driver", "canceled order")
+  })
 
-    await expect(modal.getByRole("alert")).toHaveText(message)
-    expect(message).toContain("already delivered")
+  test("disables the button with a reason on a completed order", async ({
+    page,
+  }) => {
+    const orderId = createOrder("completed")
+    const driver = await createDriverViaApi(page.request)
+    expect((await assignViaApi(page.request, orderId, driver.id)).status()).toBe(
+      400
+    )
+
+    const widget = await openOrder(page, orderId)
+
+    await expectAssignDisabled(page, widget, "Assign driver", "completed order")
+  })
+
+  test("disables the button with a reason on a delivered order that has a driver", async ({
+    page,
+  }) => {
+    const orderId = createOrder("fulfilled")
+    const driver = await createDriverViaApi(page.request)
+    expect((await assignViaApi(page.request, orderId, driver.id)).status()).toBe(
+      200
+    )
+    await markDeliveredViaApi(page.request, orderId)
+
+    const widget = await openOrder(page, orderId)
+    await expect(widget).toContainText(fullName(driver))
+
+    await expectAssignDisabled(
+      page,
+      widget,
+      "Change driver",
+      "already delivered"
+    )
+  })
+
+  test("keeps the button enabled on a pending order", async ({ page }) => {
+    const orderId = createOrder("fulfilled")
+
+    const widget = await openOrder(page, orderId)
+
+    await expect(
+      widget.getByRole("button", { name: "Assign driver" })
+    ).toBeEnabled()
+    await expect(page.getByTestId("assign-driver-disabled")).toHaveCount(0)
+  })
+
+  test("shows the three delivery statuses", async ({ page }) => {
+    const pendingId = createOrder("fulfilled")
+    const partialId = createOrder("partially_delivered")
+    const deliveredId = createOrder("delivered")
+
+    const pendingWidget = await openOrder(page, pendingId)
+    await expect(pendingWidget).toContainText("Pending delivery")
+
+    const partialWidget = await openOrder(page, partialId)
+    await expect(partialWidget).toContainText("Partially delivered")
+    await expect(partialWidget).not.toContainText("Pending delivery")
+    // A delivered fulfillment already locks the driver.
+    await expectAssignDisabled(
+      page,
+      partialWidget,
+      "Assign driver",
+      "already delivered"
+    )
+
+    const deliveredWidget = await openOrder(page, deliveredId)
+    await expect(deliveredWidget).toContainText("Delivered")
+    await expect(deliveredWidget).not.toContainText("Partially")
+    await expect(deliveredWidget).not.toContainText("Pending delivery")
+  })
+
+  test("ignores a canceled fulfillment when deciding the delivery status", async ({
+    page,
+  }) => {
+    const orderId = createOrder("delivered_with_canceled")
+
+    const widget = await openOrder(page, orderId)
+
+    await expect(widget.getByText("Delivered", { exact: true })).toBeVisible()
+    await expect(widget).not.toContainText("Partially delivered")
   })
 
   test("shows the delivery as soon as the order page marks it delivered", async ({
