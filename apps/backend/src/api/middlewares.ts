@@ -7,7 +7,10 @@ import { adminDriverRoutesMiddlewares } from './admin/drivers/middlewares'
 import { adminMediaRoutesMiddlewares } from './admin/media/middlewares'
 import { adminMetafieldDefinitionRoutesMiddlewares } from './admin/metafield-definitions/middlewares'
 import { adminOrderRoutesMiddlewares } from './admin/orders/middlewares'
-import { adminPackagePresetRoutesMiddlewares } from './admin/package-presets/middlewares'
+import {
+  adminPackagePresetRoutesMiddlewares,
+  adminProductPackagePresetMiddlewares,
+} from './admin/package-presets/middlewares'
 import { adminProductSeoRoutesMiddlewares } from './admin/products/[id]/seo/middlewares'
 import { adminProductFullRoutesMiddlewares } from './admin/products/full/middlewares'
 import { authDriverRoutesMiddlewares } from './auth/middlewares'
@@ -27,6 +30,7 @@ export default defineMiddlewares({
     ...adminPackagePresetRoutesMiddlewares,
     ...adminProductBrandMiddlewares,
     ...adminProductFullRoutesMiddlewares,
+    ...adminProductPackagePresetMiddlewares,
     ...adminProductSeoRoutesMiddlewares,
     ...authDriverRoutesMiddlewares,
     ...driverRoutesMiddlewares,
