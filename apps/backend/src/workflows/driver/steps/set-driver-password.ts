@@ -4,8 +4,14 @@ import {
 } from "@medusajs/framework/types"
 import { MedusaError, Modules } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
+import { driverHasLoginError } from "../../../modules/driver/utils/errors"
+import {
+  emailUsedByAnotherAccountError,
+  getDriverLoginOwner,
+} from "../utils/driver-login"
 
 export type SetDriverPasswordStepInput = {
+  driver_id: string
   email: string
   password: string
 }
@@ -21,20 +27,19 @@ type CompensationData =
       previous_provider_metadata: Record<string, unknown> | null
     }
 
-export const driverLoginExistsError = () =>
-  new MedusaError(
-    MedusaError.Types.NOT_ALLOWED,
-    "This email already has a driver login"
-  )
-
 // Gives the invited driver an emailpass login with the chosen password.
-// No identity for the email: register one. An identity that exists but has no
-// driver (e.g. a sign-up that stopped at "email taken", or the same person's
-// admin or customer login): set its password, as a password reset would; the
-// emailed token proves the email is theirs.
+// No login for the email: register one. A login with no role linked (e.g. a
+// sign-up that stopped at "email taken"): take it over and set its password,
+// as a password reset would; the emailed token proves the email is theirs.
+// A login an admin, a customer or another driver uses: 409 (T14.2, no shared
+// logins), checked again here because one may have appeared since the driver
+// was created.
 export const setDriverPasswordStep = createStep(
   "set-driver-password",
-  async ({ email, password }: SetDriverPasswordStepInput, { container }) => {
+  async (
+    { driver_id, email, password }: SetDriverPasswordStepInput,
+    { container }
+  ) => {
     const authModuleService: IAuthModuleService = container.resolve(
       Modules.AUTH
     )
@@ -63,8 +68,17 @@ export const setDriverPasswordStep = createStep(
       )
     }
 
-    if (existing.auth_identity?.app_metadata?.driver_id) {
-      throw driverLoginExistsError()
+    const owner = getDriverLoginOwner(
+      existing.auth_identity?.app_metadata,
+      driver_id
+    )
+
+    if (owner === "other") {
+      throw emailUsedByAnotherAccountError()
+    }
+
+    if (owner === "driver") {
+      throw driverHasLoginError()
     }
 
     const authIdentityId = existing.auth_identity?.id ?? existing.auth_identity_id

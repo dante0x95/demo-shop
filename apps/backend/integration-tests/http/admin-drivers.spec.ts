@@ -2,6 +2,7 @@ import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import { DRIVER_MODULE } from "../../src/modules/driver"
 import DriverModuleService from "../../src/modules/driver/service"
 import { createAdminUser } from "../helpers/admin-auth"
+import { createCustomerWithLogin } from "../helpers/customer-auth"
 import {
   bearer,
   createDriver,
@@ -134,6 +135,44 @@ medusaIntegrationTestRunner({
         expect(await countDrivers()).toBe(1)
       })
 
+      it("rejects the email of an admin login with 409 and sends nothing", async () => {
+        await createAdminUser(api, getContainer(), { email: "ana@test.com" })
+
+        const res = await postDriver(VALID_BODY)
+
+        expect(res.status).toBe(409)
+        expect(res.data).toEqual({
+          type: "conflict",
+          message: "This email is already used by another account",
+        })
+        expect(await countDrivers()).toBe(0)
+        const service: DriverModuleService = getContainer().resolve(DRIVER_MODULE)
+        expect(await service.listDriverInvites({})).toHaveLength(0)
+      })
+
+      it("rejects the email of a customer login with 409", async () => {
+        await createCustomerWithLogin(api, getContainer(), {
+          email: "ana@test.com",
+        })
+
+        const res = await postDriver(VALID_BODY)
+
+        expect(res.status).toBe(409)
+        expect(res.data.message).toBe(
+          "This email is already used by another account"
+        )
+        expect(await countDrivers()).toBe(0)
+      })
+
+      it("accepts the email of a login with no role (abandoned driver sign-up)", async () => {
+        await registerDriverIdentity(api, { email: "ana@test.com" })
+
+        const res = await postDriver(VALID_BODY)
+
+        expect(res.status).toBe(200)
+        expect(await countDrivers()).toBe(1)
+      })
+
       it("creates one driver when the same email is posted concurrently", async () => {
         const responses = await Promise.all(
           Array.from({ length: 5 }, () => postDriver(VALID_BODY))
@@ -155,7 +194,7 @@ medusaIntegrationTestRunner({
       it("blocks self-registration with an admin-created driver's email", async () => {
         await createDriverAsAdmin()
 
-        // The invitation is pending, so sign-up points to it (see T14.1).
+        // The invitation is pending, so sign-up points to it (403, T14.2).
         const registerRes = await api
           .post("/auth/driver/emailpass/register", {
             email: "ana@test.com",
@@ -163,7 +202,7 @@ medusaIntegrationTestRunner({
           })
           .catch((e) => e.response)
 
-        expect(registerRes.status).toBe(400)
+        expect(registerRes.status).toBe(403)
         expect(registerRes.data.message).toMatch(/pending driver invitation/)
         expect(await countDrivers()).toBe(1)
       })

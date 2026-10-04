@@ -4,8 +4,8 @@ import { DRIVER_MODULE } from "../../../modules/driver"
 import DriverModuleService from "../../../modules/driver/service"
 import { driverEmailExistsError } from "../utils/driver-email-conflict"
 import {
-  driverInvitePendingError,
-  isDriverInvitePending,
+  driverInviteGateError,
+  getDriverInviteGate,
 } from "../utils/driver-invite"
 
 export type ValidateDriverAccountStepInput = {
@@ -49,15 +49,16 @@ export const validateDriverAccountStep = createStep(
 
     const [existing] = await driverModuleService.listDrivers(
       { email },
-      { select: ["id"], relations: ["invite"], take: 1 }
+      { select: ["id"], relations: ["invites"], take: 1 }
     )
 
     // An admin may have created a driver with this email (POST /admin/drivers).
-    // While its invitation is pending, point the driver to that email instead.
+    // Until its invitation is accepted, point the driver to the invitation
+    // (403): check the email, or ask the store for a new link once it expired.
     if (existing) {
-      throw isDriverInvitePending(existing.invite)
-        ? driverInvitePendingError()
-        : driverEmailExistsError()
+      const gate = getDriverInviteGate(existing.invites, new Date())
+
+      throw gate ? driverInviteGateError(gate) : driverEmailExistsError()
     }
 
     return new StepResponse(email)

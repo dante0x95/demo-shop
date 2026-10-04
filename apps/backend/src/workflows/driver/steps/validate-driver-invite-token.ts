@@ -1,8 +1,12 @@
-import { MedusaError } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { DRIVER_MODULE } from "../../../modules/driver"
 import DriverModuleService from "../../../modules/driver/service"
-import { hashDriverInviteToken } from "../utils/driver-invite"
+import {
+  driverInviteNotFoundError,
+  driverInviteUnusableError,
+  getDriverInviteStatus,
+  hashDriverInviteToken,
+} from "../utils/driver-invite"
 
 export type ValidateDriverInviteTokenStepInput = {
   token: string
@@ -13,8 +17,9 @@ export type ValidateDriverInviteTokenStepOutput = {
   driver: { id: string; email: string }
 }
 
-// Resolves the invitation behind an emailed token. A replaced link's token no
-// longer matches any invite, so it reads as invalid.
+// Resolves the invitation behind an emailed token and checks, from its stored
+// record, that it can still be used: unknown link 404, already accepted 409,
+// expired, revoked or replaced 410.
 export const validateDriverInviteTokenStep = createStep(
   "validate-driver-invite-token",
   async ({ token }: ValidateDriverInviteTokenStepInput, { container }) => {
@@ -27,24 +32,15 @@ export const validateDriverInviteTokenStep = createStep(
     )
 
     if (!invite?.driver) {
-      throw new MedusaError(
-        MedusaError.Types.NOT_ALLOWED,
-        "This invitation link is invalid. Ask for a new invitation."
-      )
+      throw driverInviteNotFoundError()
     }
 
-    if (invite.accepted_at) {
-      throw new MedusaError(
-        MedusaError.Types.NOT_ALLOWED,
-        "This invitation was already accepted. Log in with your email and password."
-      )
-    }
+    const error = driverInviteUnusableError(
+      getDriverInviteStatus(invite, new Date())
+    )
 
-    if (new Date(invite.expires_at).getTime() <= Date.now()) {
-      throw new MedusaError(
-        MedusaError.Types.NOT_ALLOWED,
-        "This invitation link has expired. Ask for a new invitation."
-      )
+    if (error) {
+      throw error
     }
 
     return new StepResponse<ValidateDriverInviteTokenStepOutput>({
