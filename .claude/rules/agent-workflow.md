@@ -36,8 +36,10 @@ Never skip tests, use `.only`, or weaken an assertion to make it pass.
   "Free right now"). Dante reconciles both by hand after merges. A task may only add its
   plan-gate decisions (`Decided:` bullets) inside its own section of `docs/PLAN.md`.
 - Before opening the PR: `git merge origin/main`, then re-run the Definition of Done.
-- Open the PR with `gh pr create --reviewer @copilot` using the template below and check that
-  Copilot is listed as a requested reviewer (else `gh pr edit <n> --add-reviewer @copilot`).
+- Open the PR as a draft with `gh pr create --draft`, using the template below. Codex reviews it
+  first. Mark it ready (`gh pr ready <n>`) only after Codex's review is done: the repo ruleset
+  skips drafts, so that is what starts Copilot's review (if the PR timeline shows no Copilot
+  review request, `gh pr edit <n> --add-reviewer @copilot`).
   Append `· PR #<n>` to your line in the board (`trabajo.md`), then STOP.
 - Review feedback = new commits on the same branch. Every Codex and Copilot comment gets a fix
   (commit) or a reply with the reason; a PR with an unanswered comment is not ready to merge.
