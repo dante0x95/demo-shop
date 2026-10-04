@@ -4,13 +4,16 @@ import {
   validateAndTransformQuery,
 } from "@medusajs/framework/http"
 import {
+  deleteMetafieldDefinitionTransformQueryConfig,
   listMetafieldDefinitionsTransformQueryConfig,
   retrieveMetafieldDefinitionTransformQueryConfig,
 } from "./query-config"
 import {
   AdminCreateMetafieldDefinition,
+  AdminDeleteMetafieldDefinitionParams,
   AdminGetMetafieldDefinitionParams,
   AdminGetMetafieldDefinitionsParams,
+  AdminUpdateMetafieldDefinition,
 } from "./validators"
 
 export const adminMetafieldDefinitionRoutesMiddlewares: MiddlewareRoute[] = [
@@ -42,6 +45,27 @@ export const adminMetafieldDefinitionRoutesMiddlewares: MiddlewareRoute[] = [
       validateAndTransformQuery(
         AdminGetMetafieldDefinitionParams,
         retrieveMetafieldDefinitionTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    method: ["POST"],
+    matcher: "/admin/metafield-definitions/:id",
+    middlewares: [
+      validateAndTransformBody(AdminUpdateMetafieldDefinition),
+      validateAndTransformQuery(
+        AdminGetMetafieldDefinitionParams,
+        retrieveMetafieldDefinitionTransformQueryConfig
+      ),
+    ],
+  },
+  {
+    method: ["DELETE"],
+    matcher: "/admin/metafield-definitions/:id",
+    middlewares: [
+      validateAndTransformQuery(
+        AdminDeleteMetafieldDefinitionParams,
+        deleteMetafieldDefinitionTransformQueryConfig
       ),
     ],
   },

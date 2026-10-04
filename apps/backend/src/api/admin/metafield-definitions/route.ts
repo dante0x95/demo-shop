@@ -2,7 +2,10 @@ import {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import {
+  ContainerRegistrationKeys,
+  MedusaError,
+} from "@medusajs/framework/utils"
 import { createMetafieldDefinitionWorkflow } from "../../../workflows/metafield/create-metafield-definition"
 import {
   AdminCreateMetafieldDefinitionType,
@@ -45,9 +48,26 @@ export const POST = async (
   req: AuthenticatedMedusaRequest<AdminCreateMetafieldDefinitionType>,
   res: MedusaResponse
 ) => {
-  const { result } = await createMetafieldDefinitionWorkflow(req.scope).run({
-    input: req.validatedBody,
-  })
+  let id: string
+
+  try {
+    const { result } = await createMetafieldDefinitionWorkflow(req.scope).run({
+      input: req.validatedBody,
+    })
+    id = result.id
+  } catch (error) {
+    // Medusa's error handler replaces every CONFLICT message with a generic
+    // idempotency hint, which would hide which existing values don't fit.
+    if ((error as MedusaError)?.type === MedusaError.Types.CONFLICT) {
+      res.status(409).json({
+        type: MedusaError.Types.CONFLICT,
+        message: (error as MedusaError).message,
+      })
+      return
+    }
+
+    throw error
+  }
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
@@ -56,7 +76,7 @@ export const POST = async (
   } = await query.graph({
     entity: "metafield_definition",
     fields: req.queryConfig.fields,
-    filters: { id: result.id },
+    filters: { id },
   })
 
   res.json({ metafield_definition })

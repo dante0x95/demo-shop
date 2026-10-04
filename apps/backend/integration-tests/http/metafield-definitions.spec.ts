@@ -61,6 +61,7 @@ medusaIntegrationTestRunner({
           type: "text",
           options: null,
           owner_type: "product",
+          storefront_access: false,
           created_at: expect.any(String),
           updated_at: expect.any(String),
         })
@@ -403,6 +404,105 @@ medusaIntegrationTestRunner({
         )
 
         expect(after.status).toBe(200)
+      })
+
+      it("returns 400 for an invalid delete_values", async () => {
+        const definition = await createDefinition()
+
+        const res = await api
+          .delete(
+            `/admin/metafield-definitions/${definition.id}?delete_values=yes`,
+            adminHeaders
+          )
+          .catch((e) => e.response)
+
+        expect(res.status).toBe(400)
+
+        const after = await api.get(
+          `/admin/metafield-definitions/${definition.id}`,
+          adminHeaders
+        )
+
+        expect(after.status).toBe(200)
+      })
+    })
+
+    describe("POST /admin/metafield-definitions/:id", () => {
+      const postUpdate = (
+        id: string,
+        body: Record<string, unknown>,
+        headers: unknown = adminHeaders
+      ) =>
+        api
+          .post(`/admin/metafield-definitions/${id}`, body, headers)
+          .catch((e) => e.response)
+
+      it("turns storefront access on and off", async () => {
+        const definition = await createDefinition()
+
+        const on = await postUpdate(definition.id, { storefront_access: true })
+
+        expect(on.status).toBe(200)
+        expect(on.data.metafield_definition).toEqual({
+          ...definition,
+          storefront_access: true,
+          updated_at: expect.any(String),
+        })
+
+        const off = await postUpdate(definition.id, {
+          storefront_access: false,
+        })
+
+        expect(off.data.metafield_definition.storefront_access).toBe(false)
+
+        const stored = await api.get(
+          `/admin/metafield-definitions/${definition.id}`,
+          adminHeaders
+        )
+
+        expect(stored.data.metafield_definition.storefront_access).toBe(false)
+      })
+
+      it.each([
+        ["no flag", {}],
+        ["a non-boolean flag", { storefront_access: "yes" }],
+        ["another field", { storefront_access: true, label: "Other" }],
+      ])("returns 400 for %s", async (_, body) => {
+        const definition = await createDefinition()
+
+        const res = await postUpdate(definition.id, body)
+
+        expect(res.status).toBe(400)
+      })
+
+      it("returns 404 for an unknown id", async () => {
+        const res = await postUpdate(UNKNOWN_ID, { storefront_access: true })
+
+        expect(res.status).toBe(404)
+      })
+
+      it("returns 404 for a deleted definition", async () => {
+        const definition = await createDefinition()
+        await api.delete(
+          `/admin/metafield-definitions/${definition.id}`,
+          adminHeaders
+        )
+
+        const res = await postUpdate(definition.id, { storefront_access: true })
+
+        expect(res.status).toBe(404)
+      })
+
+      it("returns 401 without authentication", async () => {
+        const definition = await createDefinition()
+
+        const res = await postUpdate(
+          definition.id,
+          { storefront_access: true },
+          {}
+        )
+
+        expect(res.status).toBe(401)
       })
     })
   },
