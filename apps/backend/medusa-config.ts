@@ -45,6 +45,23 @@ module.exports = defineConfig({
       resolve: './src/modules/seo',
     },
     {
+      // Medusa's default local file provider, registered only so file URLs
+      // can follow FILE_BACKEND_URL (e.g. the E2E server on another port).
+      // Unset keeps the provider's default, http://localhost:9000/static.
+      resolve: '@medusajs/medusa/file',
+      options: {
+        providers: [
+          {
+            resolve: '@medusajs/medusa/file-local',
+            id: 'local',
+            options: {
+              backend_url: process.env.FILE_BACKEND_URL?.trim() || undefined,
+            },
+          },
+        ],
+      },
+    },
+    {
       resolve: './src/modules/variant-pricing',
     },
     {

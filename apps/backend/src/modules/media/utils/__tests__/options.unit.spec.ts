@@ -28,6 +28,28 @@ describe("resolveMediaModuleOptions", () => {
     })
   })
 
+  it("lists each allowed type once, in the configured order", () => {
+    expect(
+      resolveMediaModuleOptions({
+        allowed_mime_types: ["image/webp", "image/png", "image/webp"],
+      }).allowed_mime_types
+    ).toEqual(["image/webp", "image/png"])
+  })
+
+  it("returns a copy of the default type list", () => {
+    const resolved = resolveMediaModuleOptions()
+
+    resolved.allowed_mime_types.push("image/svg+xml")
+
+    expect(resolveMediaModuleOptions().allowed_mime_types).toEqual([
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "image/avif",
+    ])
+  })
+
   it.each([NaN, 0, -1, 1.5])("rejects max_file_size %s", (value) => {
     expect(() => resolveMediaModuleOptions({ max_file_size: value })).toThrow(
       "max_file_size must be a positive integer"

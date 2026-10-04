@@ -11,6 +11,8 @@ jest.setTimeout(60 * 1000)
 process.env.MEDIA_MAX_FILE_SIZE = "20"
 process.env.MEDIA_MAX_FILES = "2"
 process.env.MEDIA_ALLOWED_MIME_TYPES = "image/png, image/webp"
+// Same reason: passed to the local file provider by medusa-config.ts.
+process.env.FILE_BACKEND_URL = " http://files.test:9001/static "
 
 medusaIntegrationTestRunner({
   inApp: true,
@@ -20,6 +22,34 @@ medusaIntegrationTestRunner({
 
     beforeEach(async () => {
       adminHeaders = await createAdminUser(api, getContainer())
+    })
+
+    describe("GET /admin/media/config with env-configured limits", () => {
+      it("returns the MEDIA_* values, not the module's defaults", async () => {
+        const res = await api.get("/admin/media/config", adminHeaders)
+
+        expect(res.status).toBe(200)
+        expect(res.data).toEqual({
+          config: {
+            allowed_mime_types: ["image/png", "image/webp"],
+            max_file_size: 20,
+            max_files: 2,
+          },
+        })
+      })
+    })
+
+    describe("file URLs with FILE_BACKEND_URL", () => {
+      it("start with the configured base URL, trimmed", async () => {
+        const form = buildMediaForm([{ name: "a.png", type: "image/png" }])
+
+        const res = await api.post("/admin/media", form, adminHeaders)
+
+        expect(res.status).toBe(200)
+        expect(res.data.media_assets[0].url).toMatch(
+          /^http:\/\/files\.test:9001\/static\/.+-a\.png$/
+        )
+      })
     })
 
     describe("POST /admin/media with env-configured limits", () => {

@@ -13,9 +13,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { ChangeEvent, FormEvent, useRef, useState } from "react"
 import {
   AdminUploadMediaFile,
-  MEDIA_MIME_TYPES,
   mediaQueryKeys,
   uploadMediaAssets,
+  useAllowedMediaTypes,
 } from "../../../lib/media"
 import { formatFileSize } from "../utils"
 
@@ -28,6 +28,7 @@ export const UploadMediaModal = () => {
   const [files, setFiles] = useState<SelectedFile[]>([])
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const allowedTypes = useAllowedMediaTypes()
   const queryClient = useQueryClient()
 
   const { mutate, isPending } = useMutation({
@@ -152,7 +153,8 @@ export const UploadMediaModal = () => {
                   id="media-files"
                   type="file"
                   multiple
-                  accept={MEDIA_MIME_TYPES.join(",")}
+                  // No filter until the config loads; the API checks anyway.
+                  accept={allowedTypes.join(",") || undefined}
                   className="hidden"
                   onChange={handleFilesChange}
                   disabled={isPending}

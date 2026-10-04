@@ -1,4 +1,5 @@
 import { APIRequestContext, expect, Page, test } from "@playwright/test"
+import { E2E_FILE_BACKEND_URL, E2E_MEDIA_ALLOWED_MIME_TYPES } from "../env"
 
 // Smallest valid files: the upload API checks each type's file signature.
 const PNG = Buffer.from(
@@ -91,6 +92,29 @@ test.describe("Admin media library page", () => {
     await expect(row.locator("img")).toHaveAttribute("src", asset.url)
   })
 
+  test("serves thumbnails from the server that stored them", async ({ page }) => {
+    const name = unique("thumbnail")
+    const asset = await uploadViaApi(page.request, png(name))
+
+    expect(asset.url.startsWith(`${E2E_FILE_BACKEND_URL}/`)).toBe(true)
+    const file = await page.request.get(asset.url)
+    expect(file.status()).toBe(200)
+    expect(Buffer.from(await file.body())).toEqual(PNG)
+
+    await page.goto("/app/media")
+    await search(page, name)
+
+    // A broken image has no natural size; the 1x1 PNG has 1.
+    const thumbnail = rowFor(page, `${name}.png`).locator("img")
+    await expect
+      .poll(() =>
+        thumbnail.evaluate((img: HTMLImageElement) =>
+          img.complete ? img.naturalWidth : -1
+        )
+      )
+      .toBe(1)
+  })
+
   test("uploads several files with alt text", async ({ page }) => {
     const first = png(unique("upload-a"))
     const second = gif(unique("upload-b"))
@@ -125,6 +149,15 @@ test.describe("Admin media library page", () => {
     await page.reload()
     await expect(rowFor(page, first.name)).toBeVisible()
     await expect(rowFor(page, second.name)).toBeVisible()
+  })
+
+  test("offers only the allowed types in the file picker", async ({ page }) => {
+    const modal = await openUploadModal(page)
+
+    await expect(modal.locator("#media-files")).toHaveAttribute(
+      "accept",
+      E2E_MEDIA_ALLOWED_MIME_TYPES.join(",")
+    )
   })
 
   test("removes a selected file before uploading", async ({ page }) => {
@@ -201,6 +234,17 @@ test.describe("Admin media library page", () => {
     await page.goto("/app/media")
     await search(page, tag)
     await expect(page.getByRole("row")).toHaveCount(3)
+
+    // Only the types the server allows (MEDIA_ALLOWED_MIME_TYPES), not every
+    // type the media module supports.
+    await page.getByRole("combobox", { name: "Type" }).click()
+    await expect(page.getByRole("option")).toHaveText([
+      "All types",
+      ...E2E_MEDIA_ALLOWED_MIME_TYPES.map((type) =>
+        type.split("/")[1].toUpperCase()
+      ),
+    ])
+    await page.keyboard.press("Escape")
 
     const filtered = page.waitForResponse(
       (res) =>
