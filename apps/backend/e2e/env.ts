@@ -6,6 +6,9 @@ loadEnv("development", path.resolve(__dirname, ".."))
 export const E2E_DB_NAME = "medusa_e2e"
 export const E2E_PORT = 9001
 export const E2E_BASE_URL = `http://localhost:${E2E_PORT}`
+export const E2E_FILE_BACKEND_URL = `${E2E_BASE_URL}/static`
+// A strict subset of the media module's supported types, in this order.
+export const E2E_MEDIA_ALLOWED_MIME_TYPES = ["image/png", "image/gif", "image/webp"]
 export const E2E_ADMIN_EMAIL = "e2e-admin@example.com"
 export const E2E_ADMIN_PASSWORD = "e2e-supersecret"
 export const E2E_AUTH_FILE = path.resolve(__dirname, "../.playwright/auth/admin.json")

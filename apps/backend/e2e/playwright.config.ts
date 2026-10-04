@@ -7,6 +7,8 @@ import {
   E2E_BASE_URL,
   E2E_DATABASE_URL,
   E2E_DB_NAME,
+  E2E_FILE_BACKEND_URL,
+  E2E_MEDIA_ALLOWED_MIME_TYPES,
   E2E_PORT,
   MAINTENANCE_DATABASE_URL,
 } from "./env"
@@ -57,6 +59,11 @@ export default defineConfig({
       E2E_ADMIN_PASSWORD,
       ADMIN_CORS: E2E_BASE_URL,
       AUTH_CORS: E2E_BASE_URL,
+      // Uploaded files are served by this server, not the dev one on 9000.
+      FILE_BACKEND_URL: E2E_FILE_BACKEND_URL,
+      // Fewer types than the module supports, so the media page proves it
+      // lists only the shop's allowed ones.
+      MEDIA_ALLOWED_MIME_TYPES: E2E_MEDIA_ALLOWED_MIME_TYPES.join(","),
     },
   },
 })
