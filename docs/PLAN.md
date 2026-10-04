@@ -14,10 +14,9 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T20, T21, T23 (API) · T25, T26.1 (admin UI, one at a time).
+Free right now: T14.2, T20, T21, T23 (API) · T25.1, T26.1 (admin UI, one at a time).
 Blocked outside this backlog: T07.1 (custom admin phase).
-T20, T21 and T23 have open ❓ for the plan gate. T14.2 waits on its ❓ (open decisions from T14.1).
-T19 waits on its own ❓ (one plugin or several, where to publish) and on T20, T23, T28.
+T19 waits on T20, T23, T28.
 
 Files several tasks touch (see the rules file for how to resolve a conflict):
 
@@ -332,7 +331,7 @@ Reusable modules (T26, T27, T28) keeps its files grouped by module so T19 can mo
 Deps: T14.1
 - List (paginated, `is_active` filter), create, and resend invitation.
 
-### [ ] T25 · Assign-driver widget on the order page
+### [x] T25 · Assign-driver widget on the order page
 Deps: T15, T17
 - Shows the assigned driver and delivery status; admin picks or changes the driver. Shows the
   API's 400 reasons (inactive driver, canceled or delivered order).
