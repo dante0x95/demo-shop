@@ -24,9 +24,9 @@ import {
   AdminMediaAsset,
   deleteMediaAsset,
   listMediaAssets,
-  MEDIA_MIME_TYPES,
   mediaQueryKeys,
   mediaTypeLabel,
+  useAllowedMediaTypes,
 } from "../../lib/media"
 import { UploadMediaModal } from "./components/upload-media-modal"
 import { formatFileSize } from "./utils"
@@ -58,6 +58,7 @@ const MediaPage = () => {
   })
   const [search, setSearch] = useState("")
   const [mimeType, setMimeType] = useState(ALL_TYPES)
+  const allowedTypes = useAllowedMediaTypes()
   const prompt = usePrompt()
   const queryClient = useQueryClient()
 
@@ -205,7 +206,7 @@ const MediaPage = () => {
               </Select.Trigger>
               <Select.Content>
                 <Select.Item value={ALL_TYPES}>All types</Select.Item>
-                {MEDIA_MIME_TYPES.map((type) => (
+                {allowedTypes.map((type) => (
                   <Select.Item key={type} value={type}>
                     {mediaTypeLabel(type)}
                   </Select.Item>
