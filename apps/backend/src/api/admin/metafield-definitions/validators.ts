@@ -1,4 +1,5 @@
 import { z } from "@medusajs/framework/zod"
+import { booleanString } from "@medusajs/medusa/api/utils/common-validators/index"
 import {
   createFindParams,
   createSelectParams,
@@ -40,4 +41,23 @@ export const AdminCreateMetafieldDefinition = z.strictObject({
 
 export type AdminCreateMetafieldDefinitionType = z.infer<
   typeof AdminCreateMetafieldDefinition
+>
+
+// Only the storefront access flag can change (decided).
+export const AdminUpdateMetafieldDefinition = z.strictObject({
+  storefront_access: z.boolean(),
+})
+
+export type AdminUpdateMetafieldDefinitionType = z.infer<
+  typeof AdminUpdateMetafieldDefinition
+>
+
+// `delete_values=true` also deletes the definition's values; by default
+// they are kept as unstructured values.
+export const AdminDeleteMetafieldDefinitionParams = z.strictObject({
+  delete_values: booleanString().optional(),
+})
+
+export type AdminDeleteMetafieldDefinitionParamsType = z.infer<
+  typeof AdminDeleteMetafieldDefinitionParams
 >

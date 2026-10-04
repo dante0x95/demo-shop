@@ -7,14 +7,15 @@ import {
   MedusaError,
 } from "@medusajs/framework/utils"
 import { deleteMetafieldDefinitionWorkflow } from "../../../../workflows/metafield/delete-metafield-definition"
-import { AdminGetMetafieldDefinitionParamsType } from "../validators"
+import { updateMetafieldDefinitionWorkflow } from "../../../../workflows/metafield/update-metafield-definition"
+import {
+  AdminDeleteMetafieldDefinitionParamsType,
+  AdminGetMetafieldDefinitionParamsType,
+  AdminUpdateMetafieldDefinitionType,
+} from "../validators"
 
-export const GET = async (
-  req: AuthenticatedMedusaRequest<
-    unknown,
-    AdminGetMetafieldDefinitionParamsType
-  >,
-  res: MedusaResponse
+const retrieveMetafieldDefinition = async (
+  req: AuthenticatedMedusaRequest<unknown, unknown>
 ) => {
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
@@ -33,15 +34,49 @@ export const GET = async (
     )
   }
 
+  return metafield_definition
+}
+
+export const GET = async (
+  req: AuthenticatedMedusaRequest<
+    unknown,
+    AdminGetMetafieldDefinitionParamsType
+  >,
+  res: MedusaResponse
+) => {
+  const metafield_definition = await retrieveMetafieldDefinition(req)
+
+  res.json({ metafield_definition })
+}
+
+export const POST = async (
+  req: AuthenticatedMedusaRequest<
+    AdminUpdateMetafieldDefinitionType,
+    AdminGetMetafieldDefinitionParamsType
+  >,
+  res: MedusaResponse
+) => {
+  await updateMetafieldDefinitionWorkflow(req.scope).run({
+    input: { ...req.validatedBody, id: req.params.id },
+  })
+
+  const metafield_definition = await retrieveMetafieldDefinition(req)
+
   res.json({ metafield_definition })
 }
 
 export const DELETE = async (
-  req: AuthenticatedMedusaRequest,
+  req: AuthenticatedMedusaRequest<
+    unknown,
+    AdminDeleteMetafieldDefinitionParamsType
+  >,
   res: MedusaResponse
 ) => {
   await deleteMetafieldDefinitionWorkflow(req.scope).run({
-    input: { id: req.params.id },
+    input: {
+      id: req.params.id,
+      delete_values: req.validatedQuery.delete_values ?? false,
+    },
   })
 
   res.json({
