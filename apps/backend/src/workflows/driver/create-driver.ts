@@ -4,6 +4,7 @@ import {
 } from "@medusajs/framework/workflows-sdk"
 import { sendDriverInviteWorkflow } from "./send-driver-invite"
 import { createDriverStep, CreateDriverStepInput } from "./steps/create-driver"
+import { validateDriverEmailAvailableStep } from "./steps/validate-driver-email-available"
 import { validateDriverEmailUniqueStep } from "./steps/validate-driver-email-unique"
 
 export type CreateDriverWorkflowInput = CreateDriverStepInput
@@ -14,6 +15,7 @@ export const createDriverWorkflow = createWorkflow(
   "create-driver",
   function (input: CreateDriverWorkflowInput) {
     validateDriverEmailUniqueStep({ email: input.email })
+    validateDriverEmailAvailableStep({ email: input.email })
 
     const driver = createDriverStep(input)
 

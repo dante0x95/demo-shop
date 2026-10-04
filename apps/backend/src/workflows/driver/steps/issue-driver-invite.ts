@@ -18,17 +18,14 @@ export type IssueDriverInviteStepOutput = {
   expires_at: Date
 }
 
-type PreviousInvite = {
-  id: string
-  token_hash: string
-  expires_at: Date
-  accepted_at: Date | null
+type CompensationData = {
+  created_id: string
+  replaced_ids: string[]
 }
 
-type CompensationData = { created_id: string } | { previous: PreviousInvite }
-
-// Creates the driver's invitation, or rotates the existing one: a new token
-// and a new 7-day window. The old token no longer matches, so its link is dead.
+// Adds a new pending invitation with its own 7-day window. The pending one it
+// replaces is revoked (or expired, if its window had passed), so its link
+// stays dead even after this one is used or expires.
 export const issueDriverInviteStep = createStep(
   "issue-driver-invite",
   async ({ driver_id }: IssueDriverInviteStepInput, { container }) => {
@@ -36,60 +33,19 @@ export const issueDriverInviteStep = createStep(
       container.resolve(DRIVER_MODULE)
 
     const token = generateDriverInviteToken()
-    const data = {
-      token_hash: hashDriverInviteToken(token),
-      expires_at: new Date(Date.now() + DRIVER_INVITE_TTL_MS),
-      accepted_at: null,
-    }
+    const now = new Date()
 
-    const findExisting = async (): Promise<PreviousInvite | undefined> => {
-      const [existing] = await driverModuleService.listDriverInvites(
-        { driver_id },
-        { select: ["id", "token_hash", "expires_at", "accepted_at"], take: 1 }
-      )
-
-      return existing
-        ? {
-            id: existing.id,
-            token_hash: existing.token_hash,
-            expires_at: existing.expires_at,
-            accepted_at: existing.accepted_at ?? null,
-          }
-        : undefined
-    }
-
-    let previous = await findExisting()
-    let inviteId = ""
-    let compensation: CompensationData | undefined
-
-    if (!previous) {
-      try {
-        const invite = await driverModuleService.createDriverInvites({
-          ...data,
-          driver_id,
-        })
-        inviteId = invite.id
-        compensation = { created_id: invite.id }
-      } catch (error) {
-        // A concurrent request created the invite first (unique driver_id):
-        // rotate that one instead.
-        previous = await findExisting()
-
-        if (!previous) {
-          throw error
-        }
-      }
-    }
-
-    if (previous) {
-      await driverModuleService.updateDriverInvites({ id: previous.id, ...data })
-      inviteId = previous.id
-      compensation = { previous }
-    }
+    const { invite, replaced_ids } =
+      await driverModuleService.issueDriverInvite({
+        driver_id,
+        token_hash: hashDriverInviteToken(token),
+        expires_at: new Date(now.getTime() + DRIVER_INVITE_TTL_MS),
+        now,
+      })
 
     return new StepResponse<IssueDriverInviteStepOutput, CompensationData>(
-      { invite_id: inviteId, token, expires_at: data.expires_at },
-      compensation
+      { invite_id: invite.id, token, expires_at: invite.expires_at },
+      { created_id: invite.id, replaced_ids }
     )
   },
   async (compensation, { container }) => {
@@ -100,11 +56,8 @@ export const issueDriverInviteStep = createStep(
     const driverModuleService: DriverModuleService =
       container.resolve(DRIVER_MODULE)
 
-    if ("created_id" in compensation) {
-      await driverModuleService.deleteDriverInvites(compensation.created_id)
-      return
-    }
-
-    await driverModuleService.updateDriverInvites(compensation.previous)
+    // The new link was never emailed: drop it and give back the one it
+    // replaced, unless a newer resend or an acceptance has moved on since.
+    await driverModuleService.revertIssuedDriverInvite(compensation)
   }
 )

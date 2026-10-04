@@ -1,26 +1,24 @@
-import { MedusaError, Modules } from "@medusajs/framework/utils"
+import { Modules } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
+import { driverHasLoginError } from "../../../modules/driver/utils/errors"
+import { DriverInviteStatus } from "../../../modules/driver/utils/invite-statuses"
 
 export type ValidateDriverWithoutLoginStepInput = {
   driver: {
     id: string
     email: string
-    invite?: { accepted_at?: Date | string | null } | null
+    invites?: ({ status: DriverInviteStatus } | null)[] | null
   }
 }
 
-export const driverHasLoginError = () =>
-  new MedusaError(
-    MedusaError.Types.NOT_ALLOWED,
-    "This driver already has a login"
-  )
-
 // An invitation only makes sense for a driver nobody can log in as yet:
 // self-registered drivers and accepted invitations already have a login.
+// Early, friendly check; issueDriverInvite checks accepted invitations again
+// under the driver's row lock.
 export const validateDriverWithoutLoginStep = createStep(
   "validate-driver-without-login",
   async ({ driver }: ValidateDriverWithoutLoginStepInput, { container }) => {
-    if (driver.invite?.accepted_at) {
+    if (driver.invites?.some((invite) => invite?.status === "accepted")) {
       throw driverHasLoginError()
     }
 
