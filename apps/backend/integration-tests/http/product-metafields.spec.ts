@@ -1051,6 +1051,47 @@ medusaIntegrationTestRunner({
         }
       })
 
+      it("keeps a definition deletion with its values waiting until a checked edit is saved", async () => {
+        const product = await createProduct()
+        const definition = await createDefinition({ key: "fit", type: "text" })
+
+        let resume!: () => void
+        let prepared!: () => void
+        const paused = new Promise<void>((resolve) => { prepared = resolve })
+        const proceed = new Promise<void>((resolve) => { resume = resolve })
+        const service = metafieldService()
+        const create = service.createMetafieldValues.bind(service)
+        const spy = jest.spyOn(service, "createMetafieldValues")
+          .mockImplementationOnce(async (...args) => {
+            prepared()
+            await proceed
+            return create(...args)
+          })
+
+        // The edit was checked against the definition and pauses before
+        // saving its first value.
+        const edit = setMetafields(product.id, [{ key: "fit", value: "Slim" }])
+        let removal: Promise<any> | undefined
+        try {
+          await paused
+          let settled = false
+          removal = deleteDefinition(definition.id, "?delete_values=true")
+            .finally(() => { settled = true })
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          expect(settled).toBe(false)
+          resume()
+          expect((await edit).status).toBe(200)
+          expect((await removal).status).toBe(200)
+          // The deletion ran after the save, so no value outlives it.
+          expect(await listStoredValues(product.id)).toEqual([])
+        } finally {
+          resume()
+          await edit
+          await removal
+          spy.mockRestore()
+        }
+      })
+
       it("releases the lock after a failed run", async () => {
         const product = await createProduct()
         await createDefinition({ key: "weight", type: "number" })
