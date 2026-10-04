@@ -10,10 +10,10 @@ Follow .claude/skills/next-task/SKILL.md and .claude/rules/agent-workflow.md, wi
    description follows the template in agent-workflow.md (business value + how to test only).
 2. Never guess business rules. If the task has an unanswered ❓ in docs/PLAN.md, release the claim
    (git update-ref -d refs/claims/<task-id>), remove your board line, and report it as blocked.
-3. Review loop (max 3 rounds). Codex and Copilot both review the PR; every comment from either
-   gets a fix (new commit) or a reply with the reason. Before round 1, wait (up to 10 min) for
-   Copilot's first review: `gh api repos/{owner}/{repo}/pulls/<n>/reviews` lists one from
-   `copilot-pull-request-reviewer[bot]`. For round N = 1, 2, 3:
+3. Review loop. Codex reviews first while the PR is a draft; Copilot reviews only after Codex is
+   done (the repo ruleset skips drafts, so marking the PR ready is what starts Copilot's review).
+   Every comment from either gets a fix (new commit) or a reply with the reason.
+   Codex rounds (max 3), right after opening the draft PR, no waiting. For round N = 1, 2, 3:
    a. Run Codex. It follows AGENTS.md → "PR Review and Merge Readiness":
       codex exec --sandbox workspace-write -c sandbox_workspace_write.network_access=true \
         -o /tmp/review-<task-id>-N.md \
@@ -24,17 +24,25 @@ Follow .claude/skills/next-task/SKILL.md and .claude/rules/agent-workflow.md, wi
       `## Codex review · round N`. If it is missing, post it yourself:
       `gh pr comment <n> --body-file /tmp/review-<task-id>-N.md`, with that heading added as the
       first line if the file lacks it.
-   c. Read every comment not handled yet, from Codex (report findings and inline) and Copilot
-      (review overview findings and inline):
+   c. Read every Codex comment not handled yet (report findings and inline):
       gh pr view <n> --comments
-      gh api repos/{owner}/{repo}/pulls/<n>/reviews
       gh api repos/{owner}/{repo}/pulls/<n>/comments
-   d. If the report says READY TO MERGE and no Codex or Copilot comment is left unanswered, stop
-      the loop.
+   d. If the report says READY TO MERGE and no Codex comment is left unanswered, stop the Codex
+      rounds.
    e. Otherwise fix the valid ones (blockers and worthwhile non-blocking findings) as new commits,
       re-run the Definition of Done and push. Reply to each inline comment in its thread, and
       answer report-only findings in one PR comment: fixed (with commit) or rejected (with reason).
-      Copilot re-reviews after a push; its new comments are handled in the next round.
+   Copilot (max 2 rounds), once the Codex rounds are over:
+   f. `gh pr ready <n>`. Check Copilot was requested:
+      `gh api repos/{owner}/{repo}/issues/<n>/timeline --jq '[.[]|select(.event=="review_requested")|.requested_reviewer.login]'`
+      shows `Copilot`; if not, `gh pr edit <n> --add-reviewer @copilot`.
+   g. Wait (up to 10 min) for its review: `gh api repos/{owner}/{repo}/pulls/<n>/reviews` lists one
+      from `copilot-pull-request-reviewer[bot]`. If it only says the quota limit was reached, note
+      it for the final report and stop.
+   h. Read its findings (review overview and inline: the `reviews` and `comments` calls above).
+      Fix the valid ones as new commits, re-run the Definition of Done and push; reply to each
+      inline comment in its thread (fixed with commit, or rejected with reason). Copilot re-reviews
+      after a push; handle its new comments once more (round 2), then stop.
 4. Final report, short: task ID, PR link, one line per Codex round (verdict + link to its report
    comment), one line for Copilot (findings count). Details only for findings: what Codex or
    Copilot found and what you fixed (commit) or rejected (why); confirm no comment is left
