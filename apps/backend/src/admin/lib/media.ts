@@ -1,4 +1,4 @@
-import { SUPPORTED_IMAGE_MIME_TYPES } from "../../modules/media/utils/mime-types"
+import { useQuery } from "@tanstack/react-query"
 import { sdk } from "./sdk"
 
 export type AdminMediaAsset = {
@@ -34,9 +34,12 @@ export type AdminUploadMediaFile = {
   alt?: string
 }
 
-// Every type the media module can store. A shop may allow fewer through the
-// module's `allowed_mime_types` option; the upload API rejects the rest.
-export const MEDIA_MIME_TYPES: readonly string[] = SUPPORTED_IMAGE_MIME_TYPES
+// The media module's options as the shop configured them.
+export type AdminMediaConfig = {
+  allowed_mime_types: string[]
+  max_file_size: number
+  max_files: number
+}
 
 export const mediaTypeLabel = (mimeType: string) =>
   (mimeType.split("/")[1] ?? mimeType).toUpperCase()
@@ -45,6 +48,22 @@ export const mediaQueryKeys = {
   all: ["media_assets"] as const,
   list: (params: AdminMediaAssetListParams) =>
     ["media_assets", "list", params] as const,
+  // Outside `all`, so uploads and deletes don't refetch it.
+  config: ["media_config"] as const,
+}
+
+export const getMediaConfig = () =>
+  sdk.client.fetch<{ config: AdminMediaConfig }>("/admin/media/config")
+
+// Only the types the shop allows (the upload API rejects the rest). Empty
+// until the config loads.
+export const useAllowedMediaTypes = (): string[] => {
+  const { data } = useQuery({
+    queryKey: mediaQueryKeys.config,
+    queryFn: getMediaConfig,
+  })
+
+  return data?.config.allowed_mime_types ?? []
 }
 
 export const listMediaAssets = (params: AdminMediaAssetListParams) =>
