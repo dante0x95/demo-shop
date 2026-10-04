@@ -13,6 +13,8 @@ const MetafieldDefinition = model
     // Allowed values for `select`; null for every other type.
     options: model.json().nullable(),
     owner_type: model.text(),
+    // Whether `/store` may return this definition's values. Off by default.
+    storefront_access: model.boolean().default(false),
   })
   .indexes([
     {
