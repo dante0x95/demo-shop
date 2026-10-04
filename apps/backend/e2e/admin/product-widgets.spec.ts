@@ -156,7 +156,9 @@ test.describe("Product page: compare-at price and cost widget", () => {
     const widget = pricingWidget(page)
     await expect(widget.getByRole("heading", { name: "Compare-at price and cost" })).toBeVisible()
     for (const header of ["Variant", "Price", "Compare-at price", "Cost per item"]) {
-      await expect(widget.getByRole("columnheader", { name: header })).toBeVisible()
+      await expect(
+        widget.getByRole("columnheader", { name: header, exact: true })
+      ).toBeVisible()
     }
 
     const row = pricingRow(page, "S")
