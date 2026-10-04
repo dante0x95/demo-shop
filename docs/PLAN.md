@@ -114,8 +114,12 @@ Deps: T05, custom admin phase (changes how the frontend uploads)
   backend never holds file bytes in memory.
 - Needs a provider that supports presigned uploads (e.g. S3); keep the multipart path for the
   local provider.
-- ❓ Provider for production. ❓ How content is verified when the bytes never reach the backend.
-- ❓ Cleanup of files uploaded but never registered.
+- ❓ Provider for production (decide with hosting).
+- Decided: content is checked on register. The presigned URL limits type and size; then
+  `POST /admin/media` reads the file's first bytes from storage, checks them against T05's rules
+  (type, signature) and rejects (and deletes) a mismatch.
+- Decided: uploads go under a `pending/` prefix; a scheduled job deletes pending files older
+  than 24 h that were never registered.
 
 ## Phase 3 — Shopify-style product creation
 
@@ -196,17 +200,24 @@ Deps: T14 · Ships: driver invite (model + workflows), local notification provid
 
 ### [ ] T14.2 · Driver invitation follow-ups
 Deps: T14.1
-- Choices T14.1 (PR #23) made without a rule. Answer the ❓ with Dante before starting.
-- ❓ (important) The invited email already has a login with no driver linked (an abandoned
-  driver sign-up, or the same person's admin or customer login). Today accepting sets that
-  login's password and links it to the driver, which changes the password for every role that
-  shares the login. Keep it, reject the invite, or another flow?
-- ❓ An expired invitation still counts as pending: login and sign-up keep answering "check your
-  email" until an admin resends. Keep it, or let it lapse (and then what)?
-- ❓ Status codes: pending-invite errors and invalid, used or expired links are all 400. Keep?
-- ❓ Accept and resend share a lock from Medusa's default locking module, which only works inside
-  one server process. Production with several servers needs the Redis or Postgres locking
-  provider: which one, and when (a `medusa-config.ts` change)?
+- Choices T14.1 (PR #23) made without a rule, now decided with Dante.
+- Decided: no shared logins. Creating a driver (`POST /admin/drivers`) with an email that
+  already has an admin or customer login → 409 "email already used by another account";
+  accepting the invite checks again. A login with no role linked (an abandoned driver sign-up)
+  is taken over on accept: its password is set and it's linked to the driver.
+- Decided: an invite is a record with a status (pending, accepted, revoked, expired) and
+  `expires_at`, always checked server-side, not only through the token. An expired invite never
+  becomes valid again and replaced links stay unusable. Only an admin issues a new one
+  (`resend-invite`); no driver self-service endpoint.
+- Decided: once the invite expires, login and sign-up answer "your invitation expired, ask the
+  store for a new one" (sign-up stays blocked for that email).
+- Decided: status codes. 201 invite created · 400 malformed input · 404 unknown link · 410
+  expired, revoked or replaced link · 409 invite already accepted, or email used by another role
+  · 403 login or sign-up with a pending or expired invite · 429 for rate limits (none today).
+  Routes set 410 and 409 themselves (no 410 `MedusaError` type; 409 loses its message).
+- Decided: no locking-module lock. Accepting is one conditional update (only while pending and
+  not expired), and a unique index allows one pending invite per driver. No Redis and no
+  `medusa-config.ts` change.
 
 ### [x] T15 · POST /admin/orders/:id/assign-driver
 Deps: T12 · Ships: `order ↔ driver` link, `assign-driver` workflow
@@ -263,16 +274,33 @@ don't touch `create-product-full` and can run in parallel.
 Deps: T09 · Ships: metafield values (`metafield` module, Reusable)
 - Store and edit a product's values for its metafield definitions (`owner_type: product`), e.g.
   "Disclosures". Each value is validated against its definition's type and `select` options.
-- ❓ What happens to stored values when a definition is deleted. ❓ Whether `/store` product
-  responses expose the values (storefront and WhatsApp agent).
+- Decided (Shopify parity): a value belongs to owner type + owner id + key, not to a
+  definition, and stores its own type (text, number, boolean, select).
+- Decided: deleting a definition keeps its values by default (they become "unstructured").
+  `DELETE /admin/metafield-definitions/:id?delete_values=true` deletes them too (changes T09).
+- Decided: a new definition with the same owner type and key reconnects the existing values
+  when their stored type matches. Values of another type, or a `select` whose options don't
+  include an existing value → 409 on create, saying so.
+- Decided: unstructured values never appear in `/store`. In the admin: a list of unstructured
+  keys per owner type, to create a definition that reconnects them or delete all of a key's
+  values (`DELETE /admin/metafields/unstructured/:owner_type/:key`); and per product, view,
+  edit and delete them. Edits are checked against the value's stored type only (`select` is
+  checked as plain text: its options left with the definition).
+- Decided: each definition has a storefront access flag, off by default. T20 adds
+  `POST /admin/metafield-definitions/:id` to change that flag only (T09 had no update endpoint).
+- Decided: values are never in the default `/store` product payload.
+  `GET /store/products/:id/metafields?keys=a,b` returns every requested key; a missing, empty
+  or private one is `null`, never an error. One product per call (no batch route for now).
 
 ### [ ] T21 · Compare-at price and cost per item
 Deps: T08
 - Per variant, like Shopify. Compare-at shows a discount on the storefront; cost per item feeds
   margin and is admin-only (never in `/store` responses).
-- ❓ Compare-at storage: Medusa "sale" price list (the storefront gets original vs calculated
-  price for free) or a stored amount per variant and currency. ❓ Must compare-at be higher
-  than the price. ❓ Cost currency (store default only, or per currency).
+- Decided: compare-at is an amount stored on each variant (not a price list), in the store's
+  default currency. The store is single-currency.
+- Decided: any compare-at value is saved (no "must be higher" check). `/store` returns it as
+  `null` unless it's strictly higher than the variant's price, so no sale is shown.
+- Decided: cost per item is stored per variant in the store's default currency.
 
 ### [x] T22 · Product SEO title and meta description
 Deps: —
@@ -290,7 +318,8 @@ Deps: —
 Deps: T10 · Ships: `product ↔ package_preset` link (`package-preset`, Reusable)
 - "Package when shipped alone": pick a package preset for a product; none set → the store's
   default preset.
-- ❓ Per product or per variant.
+- Decided: per product (one preset for all its variants); none set → the store's default
+  preset. A per-variant override can come later.
 
 ## Phase 7 — Admin UI (Medusa's built-in panel, temporary)
 
@@ -307,6 +336,19 @@ Deps: T14.1
 Deps: T15, T17
 - Shows the assigned driver and delivery status; admin picks or changes the driver. Shows the
   API's 400 reasons (inactive driver, canceled or delivered order).
+
+### [ ] T25.1 · Order driver card follow-ups
+Deps: T25
+- Dante's answers to the assumptions T25 made (PR #28 was merged without them).
+- Decided: the delivery status has three values, using T18's rule (canceled fulfillments
+  ignored): "Delivered" = at least one non-canceled fulfillment and all have `delivered_at`;
+  "Partially delivered" = some but not all; "Pending delivery" = none, or no fulfillments.
+- Decided: "Assign driver" / "Change driver" is disabled, with a tooltip giving the reason,
+  whenever the API would refuse: order status not `pending` or `requires_action`, or any
+  fulfillment has `delivered_at` (T15). The inactive-driver 400 still shows in the picker.
+- Decided: keep `e2e/fixtures/create-order.ts` for e2e orders.
+- Tests: e2e for each status (including partially delivered), and the disabled button with its
+  tooltip on canceled, completed and delivered orders.
 
 ### [x] T26 · Media library page
 Deps: T07
@@ -355,5 +397,6 @@ Deps: T04, T07, T08, T09, T10, T20, T23, T26, T27, T28 (T08 decides which brand/
 - This shop consumes the plugin(s) via `plugins` in `medusa-config.ts`; shop workflows
   (`create-product-full`) stay in the app.
 - Existing tables and migrations must carry over: no duplicate tables, no data loss.
-- ❓ One plugin per module or one shared plugin. ❓ Publish target (npm private / GitHub Packages).
+- Decided: one plugin per module (brand, media, metafield, package-preset).
+- Decided: published privately to GitHub Packages.
 - Tests: all existing HTTP suites pass unchanged against the plugin-backed app.
