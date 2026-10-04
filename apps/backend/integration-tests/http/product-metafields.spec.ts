@@ -1,4 +1,5 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
+import { Modules } from "@medusajs/framework/utils"
 import {
   createProductsWorkflow,
   createSalesChannelsWorkflow,
@@ -921,6 +922,148 @@ medusaIntegrationTestRunner({
         })
 
         expect(res.status).toBe(400)
+      })
+    })
+
+    describe("definition changes and value edits of one key run one at a time", () => {
+      const TEST_LOCK_OWNER = "test-lock-owner"
+      const LEGACY_LOCK = "metafield:product:legacy"
+
+      const locking = () => getContainer().resolve(Modules.LOCKING)
+
+      // Settles `request` only once the test releases the key's lock, and
+      // checks it was still waiting meanwhile.
+      const whileLocked = async (
+        start: () => Promise<any>,
+        meanwhile: () => Promise<unknown>
+      ): Promise<any> => {
+        await locking().acquire(LEGACY_LOCK, { ownerId: TEST_LOCK_OWNER })
+
+        let settled = false
+        const request = start().finally(() => {
+          settled = true
+        })
+
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          expect(settled).toBe(false)
+          await meanwhile()
+        } finally {
+          await locking().release(LEGACY_LOCK, { ownerId: TEST_LOCK_OWNER })
+        }
+
+        return request
+      }
+
+      it("checks a new definition against an edit that landed while it waited", async () => {
+        const product = await createProduct()
+        await createUnstructured(
+          product.id,
+          { type: "select", value: "slim" },
+          { options: ["slim", "baggy"] }
+        )
+        const [stored] = await listStoredValues(product.id)
+
+        const res = await whileLocked(
+          () => postDefinition({ key: "legacy", type: "select", options: ["slim"] }),
+          // An edit holding the lock saves its value.
+          () =>
+            metafieldService().updateMetafieldValues({
+              id: stored.id,
+              value: "baggy",
+            })
+        )
+
+        expect(res.status).toBe(409)
+        const definitions = await api.get(
+          "/admin/metafield-definitions",
+          adminHeaders
+        )
+        expect(definitions.data.count).toBe(0)
+      })
+
+      it("checks an edit against a definition created while it waited", async () => {
+        const product = await createProduct()
+        await createUnstructured(
+          product.id,
+          { type: "select", value: "slim" },
+          { options: ["slim", "baggy"] }
+        )
+
+        const res = await whileLocked(
+          () => setMetafields(product.id, [{ key: "legacy", value: "baggy" }]),
+          // A definition creation holding the lock reconnects the value.
+          () =>
+            metafieldService().createMetafieldDefinitions({
+              key: "legacy",
+              label: "Legacy",
+              type: "select",
+              options: ["slim"] as unknown as Record<string, unknown>,
+              owner_type: "product",
+            })
+        )
+
+        expect(res.status).toBe(400)
+        const [stored] = await listStoredValues(product.id)
+        expect(stored.value).toBe("slim")
+      })
+
+      it("keeps reconnection waiting until a prepared unstructured edit is saved", async () => {
+        const product = await createProduct()
+        await createUnstructured(
+          product.id,
+          { type: "select", value: "slim" },
+          { options: ["slim", "baggy"] }
+        )
+
+        let resume!: () => void
+        let prepared!: () => void
+        const paused = new Promise<void>((resolve) => { prepared = resolve })
+        const proceed = new Promise<void>((resolve) => { resume = resolve })
+        const service = metafieldService()
+        const update = service.updateMetafieldValues.bind(service)
+        const spy = jest.spyOn(service, "updateMetafieldValues")
+          .mockImplementationOnce(async (...args) => {
+            prepared()
+            await proceed
+            return update(...args)
+          })
+
+        const edit = setMetafields(product.id, [{ key: "legacy", value: "baggy" }])
+        let reconnect: Promise<any> | undefined
+        try {
+          await paused
+          let settled = false
+          reconnect = postDefinition({ key: "legacy", type: "select", options: ["slim"] })
+            .finally(() => { settled = true })
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          expect(settled).toBe(false)
+          resume()
+          expect((await edit).status).toBe(200)
+          expect((await reconnect).status).toBe(409)
+          const [stored] = await listStoredValues(product.id)
+          expect(stored.value).toBe("baggy")
+        } finally {
+          resume()
+          await edit
+          await reconnect
+          spy.mockRestore()
+        }
+      })
+
+      it("releases the lock after a failed run", async () => {
+        const product = await createProduct()
+        await createDefinition({ key: "weight", type: "number" })
+
+        const failed = await setMetafields(product.id, [
+          { key: "weight", value: "heavy" },
+        ])
+        const next = await setMetafields(product.id, [
+          { key: "weight", value: 2 },
+        ])
+
+        expect(failed.status).toBe(400)
+        expect(next.status).toBe(200)
       })
     })
 

@@ -3,9 +3,14 @@ import {
   transform,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
-import { useQueryGraphStep } from "@medusajs/medusa/core-flows"
+import {
+  acquireLockStep,
+  releaseLockStep,
+  useQueryGraphStep,
+} from "@medusajs/medusa/core-flows"
 import { prepareMetafieldValuesStep } from "./steps/prepare-metafield-values"
 import { upsertMetafieldValuesStep } from "./steps/upsert-metafield-values"
+import { metafieldLockInput } from "./utils/lock"
 
 export const PRODUCT_OWNER_TYPE = "product"
 
@@ -31,6 +36,18 @@ export const setProductMetafieldsWorkflow = createWorkflow(
       owner_id: input.product_id,
     }))
 
+    // The definitions the values are checked against can't change before
+    // the values are saved.
+    const lock = transform({ input }, ({ input }, context) =>
+      metafieldLockInput(
+        PRODUCT_OWNER_TYPE,
+        input.metafields.map((metafield) => metafield.key),
+        context.context.transactionId!
+      )
+    )
+
+    acquireLockStep(lock)
+
     const values = prepareMetafieldValuesStep(
       transform({ input, owner }, ({ input, owner }) => ({
         ...owner,
@@ -44,6 +61,8 @@ export const setProductMetafieldsWorkflow = createWorkflow(
         values,
       }))
     )
+
+    releaseLockStep(lock)
 
     return new WorkflowResponse(input.product_id)
   }

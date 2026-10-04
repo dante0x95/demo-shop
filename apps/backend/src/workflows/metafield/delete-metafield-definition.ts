@@ -4,9 +4,14 @@ import {
   when,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
-import { useQueryGraphStep } from "@medusajs/medusa/core-flows"
+import {
+  acquireLockStep,
+  releaseLockStep,
+  useQueryGraphStep,
+} from "@medusajs/medusa/core-flows"
 import { deleteMetafieldDefinitionStep } from "./steps/delete-metafield-definition"
 import { deleteMetafieldValuesStep } from "./steps/delete-metafield-values"
+import { metafieldLockInput } from "./utils/lock"
 
 export type DeleteMetafieldDefinitionWorkflowInput = {
   id: string
@@ -26,8 +31,6 @@ export const deleteMetafieldDefinitionWorkflow = createWorkflow(
       options: { throwIfKeyNotFound: true },
     })
 
-    deleteMetafieldDefinitionStep(input.id)
-
     const valuesSelector = transform(
       { definitions },
       ({ definitions: [definition] }) => ({
@@ -36,9 +39,24 @@ export const deleteMetafieldDefinitionWorkflow = createWorkflow(
       })
     )
 
+    // An edit checked against this definition can't land after it is gone.
+    const lock = transform({ definitions }, ({ definitions: [definition] }, context) =>
+      metafieldLockInput(
+        definition.owner_type,
+        [definition.key],
+        context.context.transactionId!
+      )
+    )
+
+    acquireLockStep(lock)
+
+    deleteMetafieldDefinitionStep(input.id)
+
     when({ input }, ({ input }) => input.delete_values === true).then(() => {
       deleteMetafieldValuesStep(valuesSelector)
     })
+
+    releaseLockStep(lock)
 
     return new WorkflowResponse(input.id)
   }

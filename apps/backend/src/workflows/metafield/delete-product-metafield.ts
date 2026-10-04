@@ -3,7 +3,12 @@ import {
   transform,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
-import { useQueryGraphStep } from "@medusajs/medusa/core-flows"
+import {
+  acquireLockStep,
+  releaseLockStep,
+  useQueryGraphStep,
+} from "@medusajs/medusa/core-flows"
+import { metafieldLockInput } from "./utils/lock"
 import { PRODUCT_OWNER_TYPE } from "./set-product-metafields"
 import { deleteMetafieldValuesStep } from "./steps/delete-metafield-values"
 
@@ -24,6 +29,16 @@ export const deleteProductMetafieldWorkflow = createWorkflow(
       options: { throwIfKeyNotFound: true },
     })
 
+    const lock = transform({ input }, ({ input }, context) =>
+      metafieldLockInput(
+        PRODUCT_OWNER_TYPE,
+        [input.key],
+        context.context.transactionId!
+      )
+    )
+
+    acquireLockStep(lock)
+
     deleteMetafieldValuesStep(
       transform({ input }, ({ input }) => ({
         owner_type: PRODUCT_OWNER_TYPE,
@@ -32,6 +47,8 @@ export const deleteProductMetafieldWorkflow = createWorkflow(
         require_existing: true,
       }))
     )
+
+    releaseLockStep(lock)
 
     return new WorkflowResponse(input)
   }
