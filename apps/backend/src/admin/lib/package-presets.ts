@@ -4,6 +4,7 @@ import {
   WEIGHT_UNITS,
   WeightUnit,
 } from "../../modules/package-preset/utils/units"
+import { collectPages } from "./collect-pages"
 import { sdk } from "./sdk"
 
 export { DIMENSION_UNITS, WEIGHT_UNITS }
@@ -133,20 +134,9 @@ const ALL_PRESETS_PAGE_SIZE = 100
 
 // Every preset, by name, for the product's package picker. Shops keep a
 // handful, but the list is paged so none is ever left out.
-export const listAllPackagePresets = async (): Promise<AdminPackagePreset[]> => {
-  const presets: AdminPackagePreset[] = []
+export const listAllPackagePresets = () =>
+  collectPages<AdminPackagePreset>(async (offset, limit) => {
+    const page = await listPackagePresets({ limit, offset, order: "name" })
 
-  for (;;) {
-    const page = await listPackagePresets({
-      limit: ALL_PRESETS_PAGE_SIZE,
-      offset: presets.length,
-      order: "name",
-    })
-
-    presets.push(...page.package_presets)
-
-    if (!page.package_presets.length || presets.length >= page.count) {
-      return presets
-    }
-  }
-}
+    return { items: page.package_presets, count: page.count }
+  }, ALL_PRESETS_PAGE_SIZE)
