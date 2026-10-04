@@ -12,6 +12,7 @@ import {
   AdminGetPackagePresetParams,
   AdminGetPackagePresetsParams,
   AdminSetDefaultPackagePreset,
+  AdminSetProductPackagePreset,
 } from "./validators"
 
 export const adminPackagePresetRoutesMiddlewares: MiddlewareRoute[] = [
@@ -56,5 +57,16 @@ export const adminPackagePresetRoutesMiddlewares: MiddlewareRoute[] = [
         retrievePackagePresetTransformQueryConfig
       ),
     ],
+  },
+]
+
+// The product's preset route lives under admin/products (file-based routing),
+// but its validation is package-preset code and moves with the module when it
+// becomes a plugin.
+export const adminProductPackagePresetMiddlewares: MiddlewareRoute[] = [
+  {
+    method: ["POST"],
+    matcher: "/admin/products/:id/package-preset",
+    middlewares: [validateAndTransformBody(AdminSetProductPackagePreset)],
   },
 ]
