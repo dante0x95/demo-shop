@@ -16,8 +16,9 @@ const Driver = model.define("driver", {
   // Self-registered drivers wait for an admin to activate them.
   is_active: model.boolean().default(false),
   metadata: model.json().nullable(),
-  // Drivers created from the admin get one; self-registered drivers don't.
-  invite: model.hasOne(() => DriverInvite, { mappedBy: "driver" }).nullable(),
+  // Drivers created from the admin get invitations; self-registered drivers
+  // don't.
+  invites: model.hasMany(() => DriverInvite, { mappedBy: "driver" }),
 })
 
 export default Driver

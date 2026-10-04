@@ -4,6 +4,7 @@ import {
 } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { createDriverWorkflow } from "../../../workflows/driver/create-driver"
+import { getDriverInviteErrorResponse } from "../../drivers/invite-error-response"
 import {
   AdminCreateDriverType,
   AdminGetDriverParamsType,
@@ -46,9 +47,24 @@ export const POST = async (
   >,
   res: MedusaResponse
 ) => {
-  const { result } = await createDriverWorkflow(req.scope).run({
-    input: req.validatedBody,
-  })
+  let driverId: string
+
+  try {
+    const { result } = await createDriverWorkflow(req.scope).run({
+      input: req.validatedBody,
+    })
+    driverId = result.id
+  } catch (error) {
+    // 409 when the email's login belongs to an admin or a customer.
+    const response = getDriverInviteErrorResponse(error)
+
+    if (response) {
+      res.status(response.status).json(response.body)
+      return
+    }
+
+    throw error
+  }
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
@@ -57,7 +73,7 @@ export const POST = async (
   } = await query.graph({
     entity: "driver",
     fields: req.queryConfig.fields,
-    filters: { id: result.id },
+    filters: { id: driverId },
   })
 
   res.json({ driver })

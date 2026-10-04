@@ -5,6 +5,7 @@ import { DRIVER_MODULE } from "../../src/modules/driver"
 import DriverModuleService from "../../src/modules/driver/service"
 import { hashDriverInviteToken } from "../../src/workflows/driver/utils/driver-invite"
 import { createAdminUser } from "../helpers/admin-auth"
+import { createCustomerWithLogin } from "../helpers/customer-auth"
 import {
   bearer,
   createDriver,
@@ -29,6 +30,18 @@ const deferred = () => {
 
 const PENDING_INVITE_MESSAGE =
   "This email has a pending driver invitation. Check your email for the invitation link to set your password."
+const EXPIRED_INVITE_MESSAGE =
+  "Your driver invitation expired. Ask the store for a new one."
+const UNKNOWN_LINK_MESSAGE =
+  "This invitation link is invalid. Ask the store for a new invitation."
+const EXPIRED_LINK_MESSAGE =
+  "This invitation link has expired. Ask the store for a new invitation."
+const REPLACED_LINK_MESSAGE =
+  "This invitation link was replaced by a newer one. Use the link in the latest invitation email."
+const ACCEPTED_MESSAGE =
+  "This invitation was already accepted. Log in with your email and password."
+const EMAIL_TAKEN_MESSAGE = "This email is already used by another account"
+const HAS_LOGIN_MESSAGE = "This driver already has a login"
 
 medusaIntegrationTestRunner({
   inApp: true,
@@ -54,12 +67,30 @@ medusaIntegrationTestRunner({
       return notification.data!.token as string
     }
 
-    const inviteOf = async (driverId: string) => {
+    const invitesOf = (driverId: string) =>
+      driverService().listDriverInvites(
+        { driver_id: driverId },
+        { order: { created_at: "ASC" } }
+      )
+
+    const inviteByToken = async (token: string) => {
       const [invite] = await driverService().listDriverInvites({
-        driver_id: driverId,
+        token_hash: hashDriverInviteToken(token),
       })
       return invite
     }
+
+    // Moves an invitation's window into the past, as if 7 days went by.
+    const expire = (id: string) =>
+      driverService().updateDriverInvites({
+        id,
+        expires_at: new Date(Date.now() - 1000),
+      })
+
+    const identitiesOf = (email = EMAIL) =>
+      getContainer()
+        .resolve(Modules.AUTH)
+        .listProviderIdentities({ entity_id: email }, { relations: ["auth_identity"] })
 
     const createDriverAsAdmin = async (body: Record<string, unknown> = {}) => {
       const res = await api.post(
@@ -87,6 +118,14 @@ medusaIntegrationTestRunner({
         .post("/auth/driver/emailpass", { email, password })
         .catch((e) => e.response)
 
+    const signUp = (email = EMAIL) =>
+      api
+        .post("/auth/driver/emailpass/register", {
+          email,
+          password: "supersecret",
+        })
+        .catch((e) => e.response)
+
     beforeEach(async () => {
       adminHeaders = await createAdminUser(api, getContainer())
     })
@@ -96,7 +135,7 @@ medusaIntegrationTestRunner({
     })
 
     describe("POST /admin/drivers sends an invitation", () => {
-      it("emails a 7-day link and stores only the token's hash", async () => {
+      it("emails a 7-day link and stores a pending record with only the token's hash", async () => {
         const before = Date.now()
         const driver = await createDriverAsAdmin()
 
@@ -120,7 +159,9 @@ medusaIntegrationTestRunner({
         expect(first_name).toBe("Ana")
         expect(driver_id).toBe(driver.id)
 
-        const invite = await inviteOf(driver.id)
+        const [invite, ...others] = await invitesOf(driver.id)
+        expect(others).toHaveLength(0)
+        expect(invite.status).toBe("pending")
         expect(invite.token_hash).toBe(hashDriverInviteToken(token as string))
         expect(invite.token_hash).not.toBe(token)
         expect(invite.accepted_at).toBeNull()
@@ -173,7 +214,9 @@ medusaIntegrationTestRunner({
         expect(res.data.driver).toEqual(
           expect.objectContaining({ id: driver.id, email: EMAIL })
         )
-        expect((await inviteOf(driver.id)).accepted_at).not.toBeNull()
+        const [invite] = await invitesOf(driver.id)
+        expect(invite.status).toBe("accepted")
+        expect(invite.accepted_at).not.toBeNull()
 
         const loginRes = await login()
         expect(loginRes.status).toBe(200)
@@ -188,53 +231,79 @@ medusaIntegrationTestRunner({
         expect(me.data.driver.id).toBe(driver.id)
       })
 
-      it("rejects a link that was already used", async () => {
+      it("rejects a link that was already used with 409", async () => {
         await createDriverAsAdmin()
         const token = await latestToken()
         expect((await accept({ token, password: PASSWORD })).status).toBe(200)
 
         const again = await accept({ token, password: "another-secret" })
 
-        expect(again.status).toBe(400)
-        expect(again.data.message).toBe(
-          "This invitation was already accepted. Log in with your email and password."
-        )
+        expect(again.status).toBe(409)
+        expect(again.data).toEqual({
+          type: "conflict",
+          message: ACCEPTED_MESSAGE,
+        })
         expect((await login()).status).toBe(200)
         expect((await login(EMAIL, "another-secret")).status).toBe(401)
       })
 
-      it("rejects an expired link and creates no login", async () => {
+      it("lets only one of two concurrent acceptances set the password", async () => {
+        await createDriverAsAdmin()
+        const token = await latestToken()
+
+        const responses = await Promise.all([
+          accept({ token, password: "first-secret" }),
+          accept({ token, password: "second-secret" }),
+        ])
+
+        const statuses = responses.map((res) => res.status).sort()
+        expect(statuses).toEqual([200, 409])
+        const winner = responses.find((res) => res.status === 200)!
+        const password =
+          responses.indexOf(winner) === 0 ? "first-secret" : "second-secret"
+        const loser = password === "first-secret" ? "second-secret" : "first-secret"
+        expect((await login(EMAIL, password)).status).toBe(200)
+        expect((await login(EMAIL, loser)).status).toBe(401)
+      })
+
+      it("rejects an expired link with 410 and creates no login", async () => {
         const driver = await createDriverAsAdmin()
         const token = await latestToken()
-        const invite = await inviteOf(driver.id)
+        const [invite] = await invitesOf(driver.id)
+        await expire(invite.id)
+
+        const res = await accept({ token, password: PASSWORD })
+
+        expect(res.status).toBe(410)
+        expect(res.data.message).toBe(EXPIRED_LINK_MESSAGE)
+        expect(await identitiesOf()).toHaveLength(0)
+        expect((await inviteByToken(token)).accepted_at).toBeNull()
+      })
+
+      it("checks the stored status, not only the token: a revoked record is rejected with 410", async () => {
+        const driver = await createDriverAsAdmin()
+        const token = await latestToken()
+        const [invite] = await invitesOf(driver.id)
         await driverService().updateDriverInvites({
           id: invite.id,
-          expires_at: new Date(Date.now() - 1000),
+          status: "revoked",
         })
 
         const res = await accept({ token, password: PASSWORD })
 
-        expect(res.status).toBe(400)
-        expect(res.data.message).toBe(
-          "This invitation link has expired. Ask for a new invitation."
-        )
-        const identities = await getContainer()
-          .resolve(Modules.AUTH)
-          .listProviderIdentities({ entity_id: EMAIL })
-        expect(identities).toHaveLength(0)
-        expect((await inviteOf(driver.id)).accepted_at).toBeNull()
+        expect(res.status).toBe(410)
+        expect(res.data.message).toBe(REPLACED_LINK_MESSAGE)
+        expect(await identitiesOf()).toHaveLength(0)
       })
 
-      it("rejects an unknown token", async () => {
+      it("rejects an unknown token with 404", async () => {
         const res = await accept({ token: "not-a-token", password: PASSWORD })
 
-        expect(res.status).toBe(400)
-        expect(res.data.message).toBe(
-          "This invitation link is invalid. Ask for a new invitation."
-        )
+        expect(res.status).toBe(404)
+        expect(res.data.message).toBe(UNKNOWN_LINK_MESSAGE)
       })
 
-      it("sets the password of a sign-up that stopped at 'email taken'", async () => {
+      it("takes over a login with no role (a sign-up that stopped at 'email taken')", async () => {
         // The identity exists from before the admin created the driver.
         const registrationToken = await registerDriverIdentity(api, {
           email: EMAIL,
@@ -260,6 +329,50 @@ medusaIntegrationTestRunner({
         )
       })
 
+      it("rejects with 409 when a customer took the email after the invitation was sent", async () => {
+        const driver = await createDriverAsAdmin()
+        const token = await latestToken()
+        await createCustomerWithLogin(api, getContainer(), {
+          email: EMAIL,
+          password: "customer-secret",
+        })
+
+        const res = await accept({ token, password: PASSWORD })
+
+        expect(res.status).toBe(409)
+        expect(res.data).toEqual({
+          type: "conflict",
+          message: EMAIL_TAKEN_MESSAGE,
+        })
+        // Nothing changed: the invitation is still usable, the customer keeps
+        // their password and the login is not linked to the driver.
+        const [invite] = await invitesOf(driver.id)
+        expect(invite.status).toBe("pending")
+        expect(invite.accepted_at).toBeNull()
+        const [identity] = await identitiesOf()
+        expect(identity.auth_identity!.app_metadata).not.toHaveProperty(
+          "driver_id"
+        )
+        const customerLogin = await api
+          .post("/auth/customer/emailpass", {
+            email: EMAIL,
+            password: "customer-secret",
+          })
+          .catch((e) => e.response)
+        expect(customerLogin.status).toBe(200)
+      })
+
+      it("rejects with 409 when an admin took the email after the invitation was sent", async () => {
+        await createDriverAsAdmin()
+        const token = await latestToken()
+        await createAdminUser(api, getContainer(), { email: EMAIL })
+
+        const res = await accept({ token, password: PASSWORD })
+
+        expect(res.status).toBe(409)
+        expect(res.data.message).toBe(EMAIL_TAKEN_MESSAGE)
+      })
+
       it.each([
         ["missing token", { password: PASSWORD }],
         ["blank token", { token: "  ", password: PASSWORD }],
@@ -274,67 +387,81 @@ medusaIntegrationTestRunner({
       })
     })
 
-    describe("pending invitation blocks login and sign-up", () => {
-      it("returns the 'check your email' error on login", async () => {
+    describe("an unaccepted invitation blocks login and sign-up with 403", () => {
+      it("points to the email on login while the invitation is pending", async () => {
         await createDriverAsAdmin()
 
         const res = await login()
 
-        expect(res.status).toBe(400)
+        expect(res.status).toBe(403)
         expect(res.data.message).toBe(PENDING_INVITE_MESSAGE)
       })
 
-      it("still points to the invitation once the link has expired", async () => {
+      it("points to the store on login once the invitation expired", async () => {
         const driver = await createDriverAsAdmin()
-        const invite = await inviteOf(driver.id)
-        await driverService().updateDriverInvites({
-          id: invite.id,
-          expires_at: new Date(Date.now() - 1000),
-        })
+        const [invite] = await invitesOf(driver.id)
+        await expire(invite.id)
 
         const res = await login()
 
-        expect(res.status).toBe(400)
-        expect(res.data.message).toBe(PENDING_INVITE_MESSAGE)
+        expect(res.status).toBe(403)
+        expect(res.data.message).toBe(EXPIRED_INVITE_MESSAGE)
       })
 
-      it("returns the error on sign-up and creates no identity", async () => {
+      it("points to the email on sign-up and creates no identity", async () => {
         await createDriverAsAdmin()
 
-        const res = await api
-          .post("/auth/driver/emailpass/register", {
-            email: EMAIL,
-            password: "supersecret",
-          })
-          .catch((e) => e.response)
+        const res = await signUp()
 
-        expect(res.status).toBe(400)
+        expect(res.status).toBe(403)
         expect(res.data.message).toBe(PENDING_INVITE_MESSAGE)
-        const identities = await getContainer()
-          .resolve(Modules.AUTH)
-          .listProviderIdentities({ entity_id: EMAIL })
-        expect(identities).toHaveLength(0)
+        expect(await identitiesOf()).toHaveLength(0)
       })
 
-      it("returns the error on POST /drivers with an earlier sign-up token", async () => {
+      it("keeps sign-up blocked once the invitation expired", async () => {
+        const driver = await createDriverAsAdmin()
+        const [invite] = await invitesOf(driver.id)
+        await expire(invite.id)
+
+        const res = await signUp()
+
+        expect(res.status).toBe(403)
+        expect(res.data.message).toBe(EXPIRED_INVITE_MESSAGE)
+        expect(await identitiesOf()).toHaveLength(0)
+      })
+
+      it("blocks POST /drivers with an earlier sign-up token, pending or expired", async () => {
         const registrationToken = await registerDriverIdentity(api, {
           email: EMAIL,
         })
-        await createDriverAsAdmin()
+        const driver = await createDriverAsAdmin()
+        const postDriver = () =>
+          api
+            .post("/drivers", defaultDriverBody, bearer(registrationToken))
+            .catch((e) => e.response)
 
-        const res = await api
-          .post("/drivers", defaultDriverBody, bearer(registrationToken))
-          .catch((e) => e.response)
+        const pending = await postDriver()
+        expect(pending.status).toBe(403)
+        expect(pending.data.message).toBe(PENDING_INVITE_MESSAGE)
 
-        expect(res.status).toBe(400)
-        expect(res.data.message).toBe(PENDING_INVITE_MESSAGE)
+        const [invite] = await invitesOf(driver.id)
+        await expire(invite.id)
+
+        const expired = await postDriver()
+        expect(expired.status).toBe(403)
+        expect(expired.data.message).toBe(EXPIRED_INVITE_MESSAGE)
         expect(await driverService().listDrivers({ email: EMAIL })).toHaveLength(
           1
         )
       })
 
-      it("leaves other emails and accepted invitations alone", async () => {
-        await createDriverAsAdmin()
+      it("unblocks login after a resend and leaves other emails alone", async () => {
+        const driver = await createDriverAsAdmin()
+        const [invite] = await invitesOf(driver.id)
+        await expire(invite.id)
+        expect((await resend(driver.id)).status).toBe(201)
+
+        expect((await login()).data.message).toBe(PENDING_INVITE_MESSAGE)
         await accept({ token: await latestToken(), password: PASSWORD })
 
         expect((await login()).status).toBe(200)
@@ -344,76 +471,138 @@ medusaIntegrationTestRunner({
     })
 
     describe("POST /admin/drivers/:id/resend-invite", () => {
-      it("sends a new link and invalidates the previous one", async () => {
+      it("creates a new invitation (201) and revokes the previous one", async () => {
         const driver = await createDriverAsAdmin()
         const firstToken = await latestToken()
 
         const res = await resend(driver.id)
 
-        expect(res.status).toBe(200)
+        expect(res.status).toBe(201)
         expect(res.data.driver).toEqual(
           expect.objectContaining({ id: driver.id, email: EMAIL })
         )
         expect(await inviteNotifications()).toHaveLength(2)
         const secondToken = await latestToken()
         expect(secondToken).not.toBe(firstToken)
-        expect(await driverService().listDriverInvites({})).toHaveLength(1)
+        expect((await invitesOf(driver.id)).map((i) => i.status)).toEqual([
+          "revoked",
+          "pending",
+        ])
 
         const old = await accept({ token: firstToken, password: PASSWORD })
-        expect(old.status).toBe(400)
-        expect(old.data.message).toBe(
-          "This invitation link is invalid. Ask for a new invitation."
-        )
+        expect(old.status).toBe(410)
+        expect(old.data.message).toBe(REPLACED_LINK_MESSAGE)
 
         const fresh = await accept({ token: secondToken, password: PASSWORD })
         expect(fresh.status).toBe(200)
         expect((await login()).status).toBe(200)
+
+        // A replaced link stays unusable after the new one is used.
+        const oldAgain = await accept({ token: firstToken, password: PASSWORD })
+        expect(oldAgain.status).toBe(410)
       })
 
-      it("does not let a link replaced mid-acceptance create the login", async () => {
+      it("replaces an expired invitation with a new 7-day one; the old link never works again", async () => {
         const driver = await createDriverAsAdmin()
         const oldToken = await latestToken()
+        const [invite] = await invitesOf(driver.id)
+        await expire(invite.id)
 
-        // Pause the resend right before it rotates the token, while it holds
-        // the invitation lock.
+        expect((await resend(driver.id)).status).toBe(201)
+
+        const [old, renewed] = await invitesOf(driver.id)
+        expect(old.status).toBe("expired")
+        expect(renewed.status).toBe("pending")
+        expect(new Date(renewed.expires_at).getTime()).toBeGreaterThan(
+          Date.now() + 6 * DAY_MS
+        )
+
+        const oldRes = await accept({ token: oldToken, password: PASSWORD })
+        expect(oldRes.status).toBe(410)
+        expect(oldRes.data.message).toBe(EXPIRED_LINK_MESSAGE)
+
+        const res = await accept({
+          token: await latestToken(),
+          password: PASSWORD,
+        })
+        expect(res.status).toBe(200)
+      })
+
+      it("refuses a resend that loses the race to an acceptance (409), sending nothing", async () => {
+        const driver = await createDriverAsAdmin()
+        const token = await latestToken()
+
+        // Pause the resend after its early checks passed, right before it
+        // issues the new invitation.
         const service = driverService()
-        const update = service.updateDriverInvites.bind(service)
-        const rotationReached = deferred()
-        const resumeRotation = deferred()
+        const issue = service.issueDriverInvite.bind(service)
+        const issueReached = deferred()
+        const resumeIssue = deferred()
         const spy = jest
-          .spyOn(service, "updateDriverInvites")
-          .mockImplementation((async (data: any) => {
-            if (data?.token_hash) {
-              rotationReached.resolve()
-              await resumeRotation.promise
-            }
-            return update(data)
+          .spyOn(service, "issueDriverInvite")
+          .mockImplementation((async (...args: any[]) => {
+            issueReached.resolve()
+            await resumeIssue.promise
+            return (issue as any)(...args)
           }) as any)
 
         try {
           const resendReq = resend(driver.id)
-          await rotationReached.promise
+          await issueReached.promise
 
-          // The old token is still valid here; acceptance must wait for the
-          // resend and then see the token as replaced.
-          const acceptReq = accept({ token: oldToken, password: "old-link" })
-          await new Promise((r) => setTimeout(r, 500))
-          resumeRotation.resolve()
+          const acceptRes = await accept({ token, password: PASSWORD })
+          expect(acceptRes.status).toBe(200)
 
-          const [resendRes, acceptRes] = await Promise.all([
-            resendReq,
-            acceptReq,
-          ])
+          resumeIssue.resolve()
+          const resendRes = await resendReq
 
-          expect(resendRes.status).toBe(200)
-          expect(acceptRes.status).toBe(400)
-          expect(acceptRes.data.message).toBe(
-            "This invitation link is invalid. Ask for a new invitation."
-          )
+          expect(resendRes.status).toBe(409)
+          expect(resendRes.data.message).toBe(HAS_LOGIN_MESSAGE)
         } finally {
           spy.mockRestore()
         }
 
+        expect(await inviteNotifications()).toHaveLength(1)
+        expect((await invitesOf(driver.id)).map((i) => i.status)).toEqual([
+          "accepted",
+        ])
+        expect((await login()).status).toBe(200)
+      })
+
+      it("rejects an acceptance that loses the race to a resend (410), creating no login", async () => {
+        const driver = await createDriverAsAdmin()
+        const oldToken = await latestToken()
+
+        // Pause the acceptance after it validated the token, right before it
+        // claims the invitation.
+        const service = driverService()
+        const claim = service.acceptPendingDriverInvite.bind(service)
+        const claimReached = deferred()
+        const resumeClaim = deferred()
+        const spy = jest
+          .spyOn(service, "acceptPendingDriverInvite")
+          .mockImplementation((async (...args: any[]) => {
+            claimReached.resolve()
+            await resumeClaim.promise
+            return (claim as any)(...args)
+          }) as any)
+
+        try {
+          const acceptReq = accept({ token: oldToken, password: "old-link" })
+          await claimReached.promise
+
+          expect((await resend(driver.id)).status).toBe(201)
+
+          resumeClaim.resolve()
+          const acceptRes = await acceptReq
+
+          expect(acceptRes.status).toBe(410)
+          expect(acceptRes.data.message).toBe(REPLACED_LINK_MESSAGE)
+        } finally {
+          spy.mockRestore()
+        }
+
+        expect(await identitiesOf()).toHaveLength(0)
         expect((await login(EMAIL, "old-link")).status).not.toBe(200)
         const fresh = await accept({
           token: await latestToken(),
@@ -423,77 +612,106 @@ medusaIntegrationTestRunner({
         expect((await login()).status).toBe(200)
       })
 
-      it("refuses a resend that overlaps an acceptance in progress", async () => {
+      it("keeps the previous link usable when the new invitation email fails", async () => {
         const driver = await createDriverAsAdmin()
-        const token = await latestToken()
-
-        // Pause the acceptance while it creates the login (lock held).
-        const auth = getContainer().resolve(Modules.AUTH)
-        const register = auth.register.bind(auth)
-        const registerReached = deferred()
-        const resumeRegister = deferred()
+        const firstToken = await latestToken()
+        const notifications = notificationService()
         const spy = jest
-          .spyOn(auth, "register")
-          .mockImplementation((async (...args: any[]) => {
-            registerReached.resolve()
-            await resumeRegister.promise
-            return (register as any)(...args)
-          }) as any)
+          .spyOn(notifications, "createNotifications")
+          .mockRejectedValueOnce(new Error("email provider down"))
 
+        let res
         try {
-          const acceptReq = accept({ token, password: PASSWORD })
-          await registerReached.promise
-
-          const resendReq = resend(driver.id)
-          await new Promise((r) => setTimeout(r, 500))
-          resumeRegister.resolve()
-
-          const [acceptRes, resendRes] = await Promise.all([
-            acceptReq,
-            resendReq,
-          ])
-
-          expect(acceptRes.status).toBe(200)
-          expect(resendRes.status).toBe(400)
-          expect(resendRes.data.message).toBe("This driver already has a login")
+          res = await resend(driver.id)
         } finally {
           spy.mockRestore()
         }
 
-        expect(await inviteNotifications()).toHaveLength(1)
+        expect(res.status).toBeGreaterThanOrEqual(500)
+        expect((await invitesOf(driver.id)).map((i) => i.status)).toEqual([
+          "pending",
+        ])
+        const accepted = await accept({ token: firstToken, password: PASSWORD })
+        expect(accepted.status).toBe(200)
+      })
+
+      it("does not bring back a replaced link when an older resend fails after a newer one was accepted", async () => {
+        const driver = await createDriverAsAdmin()
+        const originalToken = await latestToken()
+
+        // Resend A stops at its email; resend B runs and is accepted; then A's
+        // email fails and A's workflow rolls back.
+        const notifications = notificationService()
+        const create = notifications.createNotifications.bind(notifications)
+        const emailReached = deferred()
+        const failEmail = deferred()
+        let calls = 0
+        const spy = jest
+          .spyOn(notifications, "createNotifications")
+          .mockImplementation((async (...args: any[]) => {
+            if (++calls === 1) {
+              emailReached.resolve()
+              await failEmail.promise
+              throw new Error("email provider down")
+            }
+            return (create as any)(...args)
+          }) as any)
+
+        let resendA
+        try {
+          resendA = resend(driver.id)
+          await emailReached.promise
+
+          expect((await resend(driver.id)).status).toBe(201)
+          const tokenB = await latestToken()
+          expect((await accept({ token: tokenB, password: PASSWORD })).status)
+            .toBe(200)
+
+          failEmail.resolve()
+          expect((await resendA).status).toBeGreaterThanOrEqual(500)
+        } finally {
+          failEmail.resolve()
+          await resendA
+          spy.mockRestore()
+        }
+
+        expect((await invitesOf(driver.id)).map((i) => i.status)).toEqual([
+          "revoked",
+          "accepted",
+        ])
+        const original = await accept({
+          token: originalToken,
+          password: "original-link",
+        })
+        expect(original.status).toBe(410)
+        expect(original.data.message).toBe(REPLACED_LINK_MESSAGE)
         expect((await login()).status).toBe(200)
       })
 
-      it("renews an expired invitation for another 7 days", async () => {
+      it("keeps one pending invitation when resends run concurrently", async () => {
         const driver = await createDriverAsAdmin()
-        const invite = await inviteOf(driver.id)
-        await driverService().updateDriverInvites({
-          id: invite.id,
-          expires_at: new Date(Date.now() - 1000),
-        })
 
-        expect((await resend(driver.id)).status).toBe(200)
+        const responses = await Promise.all([
+          resend(driver.id),
+          resend(driver.id),
+          resend(driver.id),
+        ])
 
-        const renewed = await inviteOf(driver.id)
-        expect(new Date(renewed.expires_at).getTime()).toBeGreaterThan(
-          Date.now() + 6 * DAY_MS
-        )
-        const res = await accept({
-          token: await latestToken(),
-          password: PASSWORD,
-        })
-        expect(res.status).toBe(200)
+        expect(responses.map((res) => res.status)).toEqual([201, 201, 201])
+        const invites = await invitesOf(driver.id)
+        expect(invites.filter((i) => i.status === "pending")).toHaveLength(1)
+        expect(invites).toHaveLength(4)
       })
 
       it("invites a driver created before invitations existed", async () => {
         const [driver] = await driverService().createDrivers([
           { ...defaultDriverBody, vehicle_type: "car", email: EMAIL },
         ])
-        expect(await inviteOf(driver.id)).toBeUndefined()
+        expect(await invitesOf(driver.id)).toHaveLength(0)
 
         const res = await resend(driver.id)
 
-        expect(res.status).toBe(200)
+        expect(res.status).toBe(201)
         expect(await inviteNotifications()).toHaveLength(1)
         const acceptRes = await accept({
           token: await latestToken(),
@@ -503,26 +721,26 @@ medusaIntegrationTestRunner({
         expect((await login()).status).toBe(200)
       })
 
-      it("rejects a driver whose invitation was accepted with 400", async () => {
+      it("rejects a driver whose invitation was accepted with 409", async () => {
         const driver = await createDriverAsAdmin()
         await accept({ token: await latestToken(), password: PASSWORD })
 
         const res = await resend(driver.id)
 
-        expect(res.status).toBe(400)
-        expect(res.data.message).toBe("This driver already has a login")
+        expect(res.status).toBe(409)
+        expect(res.data).toEqual({ type: "conflict", message: HAS_LOGIN_MESSAGE })
         expect(await inviteNotifications()).toHaveLength(1)
       })
 
-      it("rejects a self-registered driver with 400", async () => {
+      it("rejects a self-registered driver with 409", async () => {
         const { driver } = await createDriver(api, { email: EMAIL })
 
         const res = await resend(driver.id)
 
-        expect(res.status).toBe(400)
-        expect(res.data.message).toBe("This driver already has a login")
+        expect(res.status).toBe(409)
+        expect(res.data.message).toBe(HAS_LOGIN_MESSAGE)
         expect(await inviteNotifications()).toHaveLength(0)
-        expect(await inviteOf(driver.id)).toBeUndefined()
+        expect(await invitesOf(driver.id)).toHaveLength(0)
       })
 
       it("rejects a body with fields with 400", async () => {
