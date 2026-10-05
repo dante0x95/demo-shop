@@ -123,6 +123,9 @@ const AddProductPage = () => {
   )
   const salesChannelsTouched = useRef(false)
   const finished = useRef(false)
+  // Media being uploaded aren't in the form yet: saving now would leave them
+  // out of the product.
+  const [isUploading, setIsUploading] = useState(false)
   const topRef = useRef<HTMLDivElement>(null)
 
   const storeQuery = useQuery({
@@ -278,7 +281,7 @@ const AddProductPage = () => {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
 
-    if (locked) {
+    if (locked || isUploading) {
       return
     }
 
@@ -388,7 +391,7 @@ const AddProductPage = () => {
             size="small"
             type="submit"
             isLoading={isCreating}
-            disabled={locked}
+            disabled={locked || isUploading}
           >
             Save
           </Button>
@@ -432,6 +435,7 @@ const AddProductPage = () => {
               setForm((prev) => ({ ...prev, ...removeMedia(prev, id) }))
             }
             onSetThumbnail={(id) => update({ thumbnail_id: id })}
+            onUploadingChange={setIsUploading}
           />
           {isSingleVariant && (
             <Section title="Pricing" testId="add-product-pricing">

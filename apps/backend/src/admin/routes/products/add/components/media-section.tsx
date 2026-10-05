@@ -1,7 +1,7 @@
 import { Photo, Trash } from "@medusajs/icons"
 import { Badge, Button, IconButton, Text } from "@medusajs/ui"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { ChangeEvent, useRef, useState } from "react"
+import { ChangeEvent, useEffect, useRef, useState } from "react"
 import {
   AdminMediaAsset,
   mediaQueryKeys,
@@ -21,6 +21,9 @@ type MediaSectionProps = {
   onAdd: (assets: AdminMediaAsset[]) => void
   onRemove: (id: string) => void
   onSetThumbnail: (id: string) => void
+  // Tells the page while files are uploading, so it can hold the save until
+  // they are part of the product.
+  onUploadingChange: (uploading: boolean) => void
 }
 
 // The product's media: picked from the library or uploaded to it (uploads
@@ -33,6 +36,7 @@ export const MediaSection = ({
   onAdd,
   onRemove,
   onSetThumbnail,
+  onUploadingChange,
 }: MediaSectionProps) => {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -66,6 +70,10 @@ export const MediaSection = ({
       upload(files)
     }
   }
+
+  useEffect(() => {
+    onUploadingChange(isUploading)
+  }, [isUploading])
 
   const busy = disabled || isUploading
 

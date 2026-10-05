@@ -465,6 +465,48 @@ test.describe("Add product page", () => {
     expect(followUps).toEqual([])
   })
 
+  test("holds the save until uploads finish, so they are part of the product", async ({
+    page,
+  }) => {
+    const name = unique("slow-upload")
+    let release!: () => void
+    const released = new Promise<void>((resolve) => (release = resolve))
+
+    await page.route("**/admin/media", async (route) => {
+      if (route.request().method() !== "POST") {
+        return route.continue()
+      }
+
+      await released
+      return route.continue()
+    })
+
+    await openPage(page)
+    await page.getByLabel("Title", { exact: true }).fill(`Slow ${name}`)
+    const media = section(page, "Media")
+    await media.getByLabel("Upload media files").setInputFiles([png(name)])
+
+    await expect(save(page)).toBeDisabled()
+
+    const uploaded = page.waitForResponse(
+      (res) =>
+        res.url().endsWith("/admin/media") && res.request().method() === "POST"
+    )
+    release()
+    const asset = (await (await uploaded).json()).media_assets[0]
+    const item = media.getByRole("listitem", { name: `${name}.png` })
+    await expect(item).toBeVisible()
+    await expect(save(page)).toBeEnabled()
+
+    await save(page).click()
+    const productId = await waitForProductPage(page)
+    const product = await getProduct(page.request, productId)
+
+    expect(product.images.map((image: { url: string }) => image.url)).toEqual([
+      asset.url,
+    ])
+  })
+
   test("doesn't track inventory when the admin turns it off", async ({
     page,
   }) => {
