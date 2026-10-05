@@ -22,6 +22,9 @@ Medusa DTC Starter — a Turborepo workspace monorepo containing a Medusa backen
 │   │       ├── subscribers/      # Event subscribers
 │   │       └── workflows/        # Workflows and workflow steps
 │   └── storefront/               # OPTIONAL storefront
+├── packages/                     # Reusable Medusa plugins (@dante0x95/medusa-plugin-*):
+│   └── <name>/src/               #   brand, media, metafield, package-preset; same src/ layout
+│                                 #   as the app, built to .medusa/server by `medusa plugin:build`
 ├── eslint.config.ts              # Root ESLint: @medusajs/eslint-plugin recommended
 ├── turbo.json                    # Task graph: build, dev, start, lint, test, seed
 ```
@@ -93,7 +96,15 @@ cd apps/backend && <pm> run test:unit -- src/modules/foo/__tests__/service.unit.
 cd apps/backend && <pm> run test:unit -- -t "returns the cart"
 cd apps/backend && <pm> run test:integration:http -- integration-tests/http/drivers
 cd apps/backend && <pm> run test:integration:modules -- src/modules/brand
+cd apps/backend && <pm> run test:unit -- packages/metafield
 ```
+
+Plugins (`packages/*`): the app loads them from their build output, so `build`, `dev`,
+`test:integration:http` and `test:e2e` first run `build:plugins` (all plugins, ~15s). Run it
+yourself before `npx tsc --noEmit` on a fresh checkout. Their unit and module suites run from the
+app's Jest config (`test:unit`, `test:integration:modules`); filter them by path as above. A
+plugin keeps its module name, so its tables, links and migrations stay the same as before the
+extraction.
 
 Integration tests are scoped to the change: run the suites for the modules and endpoints it
 touches, plus those of modules that depend on shared code it changes (`src/api/middlewares.ts`,
@@ -108,6 +119,7 @@ cd apps/backend
 <pm> exec medusa db:migrate                  # run migrations
 <pm> exec medusa user -e admin@test.com -p supersecret
 <pm> run backend:seed                        # from root; seeds initial data
+cd packages/<name> && DB_USERNAME=<role> <pm> exec medusa plugin:db:generate  # plugin module migrations
 ```
 ## Medusa Skills & Documentation
 
