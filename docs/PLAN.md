@@ -14,9 +14,8 @@ Each session runs `/next-task` in its own worktree: it takes any task whose deps
 (`[x]` here or on the board) and that no other session has claimed. No fixed order between sessions.
 Rules: `.claude/rules/agent-workflow.md` → "Parallel sessions".
 
-Free right now: T14.2, T20, T21, T23 (API) · T25.1, T26.1 (admin UI, one at a time).
+Free right now: T19 (plugins) · T30 (admin UI).
 Blocked outside this backlog: T07.1 (custom admin phase).
-T19 waits on T20, T23, T28.
 
 Files several tasks touch (see the rules file for how to resolve a conflict):
 
@@ -197,7 +196,7 @@ Deps: T14 · Ships: driver invite (model + workflows), local notification provid
 - Tests: create → invite sent; accept → can log in; expired or replaced link → rejected;
   login/register with a pending invite → the "check your email" error.
 
-### [ ] T14.2 · Driver invitation follow-ups
+### [x] T14.2 · Driver invitation follow-ups
 Deps: T14.1
 - Choices T14.1 (PR #23) made without a rule, now decided with Dante.
 - Decided: no shared logins. Creating a driver (`POST /admin/drivers`) with an email that
@@ -269,7 +268,7 @@ Fields Shopify's product page has and Medusa lacks. Each task ships its own admi
 "Add product" page (T30) calls them right after `POST /admin/products/full`, so these tasks
 don't touch `create-product-full` and can run in parallel.
 
-### [ ] T20 · Product metafield values
+### [x] T20 · Product metafield values
 Deps: T09 · Ships: metafield values (`metafield` module, Reusable)
 - Store and edit a product's values for its metafield definitions (`owner_type: product`), e.g.
   "Disclosures". Each value is validated against its definition's type and `select` options.
@@ -291,7 +290,7 @@ Deps: T09 · Ships: metafield values (`metafield` module, Reusable)
   `GET /store/products/:id/metafields?keys=a,b` returns every requested key; a missing, empty
   or private one is `null`, never an error. One product per call (no batch route for now).
 
-### [ ] T21 · Compare-at price and cost per item
+### [x] T21 · Compare-at price and cost per item
 Deps: T08
 - Per variant, like Shopify. Compare-at shows a discount on the storefront; cost per item feeds
   margin and is admin-only (never in `/store` responses).
@@ -313,7 +312,7 @@ Deps: —
 - Decided: No length limits enforced by the API. 70 (title) / 160 (meta description) are only a
   UI character counter (Shopify-style), which belongs to T29.
 
-### [ ] T23 · Package preset per product
+### [x] T23 · Package preset per product
 Deps: T10 · Ships: `product ↔ package_preset` link (`package-preset`, Reusable)
 - "Package when shipped alone": pick a package preset for a product; none set → the store's
   default preset.
@@ -336,7 +335,7 @@ Deps: T15, T17
 - Shows the assigned driver and delivery status; admin picks or changes the driver. Shows the
   API's 400 reasons (inactive driver, canceled or delivered order).
 
-### [ ] T25.1 · Order driver card follow-ups
+### [x] T25.1 · Order driver card follow-ups
 Deps: T25
 - Dante's answers to the assumptions T25 made (PR #28 was merged without them).
 - Decided: the delivery status has three values, using T18's rule (canceled fulfillments
@@ -353,7 +352,7 @@ Deps: T25
 Deps: T07
 - Browse (paginated, search, type filter), upload and delete media assets.
 
-### [ ] T26.1 · Media library page follow-ups
+### [x] T26.1 · Media library page follow-ups
 Deps: T26
 - Left over from T26 (PR #22).
 - The type filter lists all five types the media module supports, even when the shop allows
@@ -368,12 +367,12 @@ Deps: T10
 - Added `POST /admin/package-presets/:id/set-default` (PR #25): T10's API had no way to make an
   existing preset the default. No "unset default" action.
 
-### [ ] T28 · Metafields UI
+### [x] T28 · Metafields UI
 Deps: T20
 - Settings page for metafield definitions, and a product-page widget to edit the product's
   metafield values.
 
-### [ ] T29 · Product-page widgets for compare-at, cost, SEO and package
+### [x] T29 · Product-page widgets for compare-at, cost, SEO and package
 Deps: T21, T22, T23
 - Edit compare-at price and cost per item per variant, SEO title and meta description, and the
   product's package preset.
