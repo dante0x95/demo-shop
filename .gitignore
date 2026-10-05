@@ -62,3 +62,6 @@ Thumbs.db
 
 # Local board of tasks in progress, shared by the parallel sessions
 /trabajo.md
+
+# Plugin build output (medusa plugin:build)
+packages/*/.medusa

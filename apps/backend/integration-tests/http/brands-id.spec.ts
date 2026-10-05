@@ -1,8 +1,8 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { createProductsWorkflow } from "@medusajs/medusa/core-flows"
-import ProductBrandLink from "../../src/links/product-brand"
-import { BRAND_MODULE } from "../../src/modules/brand"
+import ProductBrandLink from "@dante0x95/medusa-plugin-brand/links/product-brand"
+import { BRAND_MODULE } from "@dante0x95/medusa-plugin-brand/modules/brand"
 import { createAdminUser } from "../helpers/admin-auth"
 
 jest.setTimeout(60 * 1000)

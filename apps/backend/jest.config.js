@@ -14,6 +14,9 @@ module.exports = {
   },
   testEnvironment: "node",
   moduleFileExtensions: ["js", "ts", "json"],
+  // The reusable plugins (packages/*) are tested from here too: their unit and
+  // module suites live next to their source, like the app's.
+  roots: ["<rootDir>", "<rootDir>/../../packages"],
   modulePathIgnorePatterns: ["dist/", "<rootDir>/.medusa/"],
   setupFiles: ["./integration-tests/setup.js"],
 };

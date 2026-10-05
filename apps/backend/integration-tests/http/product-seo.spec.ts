@@ -10,7 +10,7 @@ import {
   createWorkflow,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
-import { BRAND_MODULE } from "../../src/modules/brand"
+import { BRAND_MODULE } from "@dante0x95/medusa-plugin-brand/modules/brand"
 import { SEO_MODULE } from "../../src/modules/seo"
 import SeoModuleService from "../../src/modules/seo/service"
 import {

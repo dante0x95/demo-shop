@@ -1,6 +1,6 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
-import { MEDIA_MODULE } from "../../src/modules/media"
-import MediaModuleService from "../../src/modules/media/service"
+import { MEDIA_MODULE } from "@dante0x95/medusa-plugin-media/modules/media"
+import MediaModuleService from "@dante0x95/medusa-plugin-media/modules/media/service"
 import { createAdminUser } from "../helpers/admin-auth"
 
 jest.setTimeout(60 * 1000)

@@ -13,16 +13,25 @@
     "medusa"
   ],
   "scripts": {
+    "build:plugins": "npm run build --workspace ../../packages",
+    "prebuild": "npm run build:plugins",
     "build": "medusa build",
     "start": "medusa start",
+    "predev": "npm run build:plugins",
     "dev": "medusa develop",
     "lint": "medusa lint",
+    "pretest:integration:http": "npm run build:plugins",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=6144' jest --silent=false --maxWorkers=4 --workerIdleMemoryLimit=2GB --forceExit",
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=6144' jest --silent=false --maxWorkers=4 --workerIdleMemoryLimit=2GB --forceExit",
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
+    "pretest:e2e": "npm run build:plugins",
     "test:e2e": "playwright test -c e2e/playwright.config.ts"
   },
   "dependencies": {
+    "@dante0x95/medusa-plugin-brand": "0.1.0",
+    "@dante0x95/medusa-plugin-media": "0.1.0",
+    "@dante0x95/medusa-plugin-metafield": "0.1.0",
+    "@dante0x95/medusa-plugin-package-preset": "0.1.0",
     "@medusajs/admin-sdk": "2.21.2",
     "@medusajs/admin-shared": "2.21.2",
     "@medusajs/caching": "2.21.2",
@@ -35,7 +44,6 @@
     "@medusajs/medusa": "2.21.2",
     "@medusajs/ui": "4.2.6",
     "@tanstack/react-query": "5.64.2",
-    "multer": "^2.4.0",
     "react-i18next": "13.5.0",
     "react-router-dom": "7.18.2",
     "zod": "4.2.0"
@@ -46,7 +54,6 @@
     "@swc/core": "^1.7.28",
     "@swc/jest": "^0.2.36",
     "@types/jest": "^29.5.13",
-    "@types/multer": "^2.3.0",
     "@types/node": "^20.12.11",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.2.25",

@@ -5,7 +5,7 @@ import {
   createRegionsWorkflow,
   createSalesChannelsWorkflow,
 } from "@medusajs/medusa/core-flows"
-import { BRAND_MODULE } from "../../src/modules/brand"
+import { BRAND_MODULE } from "@dante0x95/medusa-plugin-brand/modules/brand"
 import { createAdminUser } from "../helpers/admin-auth"
 import { createPublishableKeyHeaders } from "../helpers/publishable-key"
 

@@ -6,7 +6,7 @@ import {
 } from "@medusajs/medusa/core-flows"
 import productPackagePresetUniqueProduct, {
   PRODUCT_PACKAGE_PRESET_UNIQUE_PRODUCT_INDEX,
-} from "../../src/migration-scripts/product-package-preset-unique-product"
+} from "@dante0x95/medusa-plugin-package-preset/migration-scripts/product-package-preset-unique-product"
 import { createAdminUser } from "../helpers/admin-auth"
 
 jest.setTimeout(60 * 1000)

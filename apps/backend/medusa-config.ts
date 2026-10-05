@@ -20,26 +20,24 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET,
     }
   },
-  modules: [
+  // Reusable modules ship as plugins (packages/*): each registers its module,
+  // links, workflows, routes and admin UI. A plugin's options go to its module.
+  plugins: [
+    '@dante0x95/medusa-plugin-brand',
     {
-      resolve: './src/modules/brand',
-    },
-    {
-      resolve: './src/modules/driver',
-    },
-    {
-      resolve: './src/modules/media',
+      resolve: '@dante0x95/medusa-plugin-media',
       options: {
         max_file_size: optionalNumber(process.env.MEDIA_MAX_FILE_SIZE),
         max_files: optionalNumber(process.env.MEDIA_MAX_FILES),
         allowed_mime_types: optionalList(process.env.MEDIA_ALLOWED_MIME_TYPES),
       },
     },
+    '@dante0x95/medusa-plugin-metafield',
+    '@dante0x95/medusa-plugin-package-preset',
+  ],
+  modules: [
     {
-      resolve: './src/modules/metafield',
-    },
-    {
-      resolve: './src/modules/package-preset',
+      resolve: './src/modules/driver',
     },
     {
       resolve: './src/modules/seo',

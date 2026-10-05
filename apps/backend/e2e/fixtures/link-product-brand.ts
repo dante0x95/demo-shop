@@ -4,7 +4,7 @@ import {
   MedusaError,
   Modules,
 } from "@medusajs/framework/utils"
-import { BRAND_MODULE } from "../../src/modules/brand"
+import { BRAND_MODULE } from "@dante0x95/medusa-plugin-brand/modules/brand"
 
 // Links a product to a brand for E2E specs; there is no HTTP route for it yet (T08).
 // Usage: npx medusa exec ./e2e/fixtures/link-product-brand.ts <productId> <brandId>

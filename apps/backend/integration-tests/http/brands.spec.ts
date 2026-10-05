@@ -1,6 +1,6 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
-import { BRAND_MODULE } from "../../src/modules/brand"
-import BrandModuleService from "../../src/modules/brand/service"
+import { BRAND_MODULE } from "@dante0x95/medusa-plugin-brand/modules/brand"
+import BrandModuleService from "@dante0x95/medusa-plugin-brand/modules/brand/service"
 import { createAdminUser } from "../helpers/admin-auth"
 
 jest.setTimeout(60 * 1000)

@@ -9,16 +9,16 @@ import {
   createWorkflow,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
-import { METAFIELD_MODULE } from "../../src/modules/metafield"
-import MetafieldModuleService from "../../src/modules/metafield/service"
+import { METAFIELD_MODULE } from "@dante0x95/medusa-plugin-metafield/modules/metafield"
+import MetafieldModuleService from "@dante0x95/medusa-plugin-metafield/modules/metafield/service"
 import {
   deleteMetafieldValuesStep,
   DeleteMetafieldValuesStepInput,
-} from "../../src/workflows/metafield/steps/delete-metafield-values"
+} from "@dante0x95/medusa-plugin-metafield/workflows/metafield/steps/delete-metafield-values"
 import {
   upsertMetafieldValuesStep,
   UpsertMetafieldValuesStepInput,
-} from "../../src/workflows/metafield/steps/upsert-metafield-values"
+} from "@dante0x95/medusa-plugin-metafield/workflows/metafield/steps/upsert-metafield-values"
 import { createAdminUser } from "../helpers/admin-auth"
 import { createPublishableKeyHeaders } from "../helpers/publishable-key"
 

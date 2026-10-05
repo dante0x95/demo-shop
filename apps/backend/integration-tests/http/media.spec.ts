@@ -1,11 +1,11 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import { Modules } from "@medusajs/framework/utils"
-import { MEDIA_MODULE } from "../../src/modules/media"
-import MediaModuleService from "../../src/modules/media/service"
+import { MEDIA_MODULE } from "@dante0x95/medusa-plugin-media/modules/media"
+import MediaModuleService from "@dante0x95/medusa-plugin-media/modules/media/service"
 import {
   DEFAULT_MAX_FILE_SIZE,
   DEFAULT_MAX_FILES,
-} from "../../src/modules/media/utils/options"
+} from "@dante0x95/medusa-plugin-media/modules/media/utils/options"
 import { createAdminUser } from "../helpers/admin-auth"
 import { buildMediaForm as buildForm, imageContent } from "../helpers/media-form"
 

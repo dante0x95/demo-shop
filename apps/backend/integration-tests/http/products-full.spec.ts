@@ -1,7 +1,7 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { createStockLocationsWorkflow } from "@medusajs/medusa/core-flows"
-import ProductBrandLink from "../../src/links/product-brand"
+import ProductBrandLink from "@dante0x95/medusa-plugin-brand/links/product-brand"
 import { createAdminUser } from "../helpers/admin-auth"
 import { buildMediaForm } from "../helpers/media-form"
 
