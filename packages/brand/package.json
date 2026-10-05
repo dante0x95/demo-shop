@@ -1,0 +1,66 @@
+{
+  "name": "@dante0x95/medusa-plugin-brand",
+  "version": "0.1.0",
+  "description": "Brands for Medusa products: admin and store routes, product link and admin pages.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dante0x95/demo-shop.git",
+    "directory": "packages/brand"
+  },
+  "keywords": [
+    "medusa-v2",
+    "medusa-plugin"
+  ],
+  "files": [
+    ".medusa/server"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./.medusa/server/src/modules/*": "./.medusa/server/src/modules/*/index.js",
+    "./modules/brand": "./.medusa/server/src/modules/brand/index.js",
+    "./admin": {
+      "import": "./.medusa/server/src/admin/index.mjs",
+      "require": "./.medusa/server/src/admin/index.js",
+      "default": "./.medusa/server/src/admin/index.js"
+    },
+    "./*": "./.medusa/server/src/*.js"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "build": "medusa plugin:build",
+    "lint": "medusa lint",
+    "prepublishOnly": "medusa plugin:build"
+  },
+  "devDependencies": {
+    "@medusajs/admin-sdk": "2.21.2",
+    "@medusajs/cli": "2.21.2",
+    "@medusajs/framework": "2.21.2",
+    "@medusajs/icons": "2.21.2",
+    "@medusajs/js-sdk": "2.21.2",
+    "@medusajs/medusa": "2.21.2",
+    "@medusajs/test-utils": "2.21.2",
+    "@medusajs/ui": "4.2.6",
+    "@swc/core": "^1.7.28",
+    "@tanstack/react-query": "5.64.2",
+    "react": "18.3.1",
+    "react-router-dom": "7.18.2",
+    "typescript": "^5.6.2"
+  },
+  "peerDependencies": {
+    "@medusajs/admin-sdk": "^2.21.2",
+    "@medusajs/framework": "^2.21.2",
+    "@medusajs/icons": "^2.21.2",
+    "@medusajs/js-sdk": "^2.21.2",
+    "@medusajs/medusa": "^2.21.2",
+    "@medusajs/ui": "^4.2.6",
+    "@tanstack/react-query": "^5.64.2",
+    "react": "^18.3.1",
+    "react-router-dom": "^7.18.2"
+  },
+  "engines": {
+    "node": ">=22.15.0"
+  }
+}
