@@ -436,8 +436,35 @@ export type FollowUpRequests = {
   seo: AdminUpdateProductSeoPayload | null
   package: string | null
   // Variants with a compare-at or cost whose created variant wasn't found
-  // (by title) in the API's response.
+  // (by its option values) in the API's response.
   unmatched_variants: string[]
+}
+
+// A created variant as `POST /admin/products/full` returns it.
+export type CreatedVariant = {
+  id: string
+  options?: { value: string; option?: { title: string } | null }[] | null
+}
+
+// Identifies a variant by its option values. Titles can't: values may
+// contain " / ", so two combinations can share a title.
+const optionsKey = (options: Record<string, string>) =>
+  JSON.stringify(
+    Object.entries(options).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  )
+
+const createdVariantKey = (variant: CreatedVariant): string | null => {
+  const options: Record<string, string> = {}
+
+  for (const value of variant.options ?? []) {
+    if (!value.option?.title) {
+      return null
+    }
+
+    options[value.option.title] = value.value
+  }
+
+  return Object.keys(options).length ? optionsKey(options) : null
 }
 
 // What to send to the T20-T23 endpoints for the created product. A part
@@ -446,11 +473,18 @@ export type FollowUpRequests = {
 export const buildFollowUpRequests = (
   form: AddProductForm,
   ctx: AddProductContext,
-  createdVariants: { id: string; title: string }[]
+  createdVariants: CreatedVariant[]
 ): FollowUpRequests => {
-  const idByTitle = new Map(
-    createdVariants.map((variant) => [variant.title, variant.id])
-  )
+  const idByOptions = new Map<string, string>()
+
+  for (const variant of createdVariants) {
+    const key = createdVariantKey(variant)
+
+    if (key) {
+      idByOptions.set(key, variant.id)
+    }
+  }
+
   const pricing: AdminUpdateVariantPricingItem[] = []
   const unmatched: string[] = []
 
@@ -472,7 +506,7 @@ export const buildFollowUpRequests = (
       continue
     }
 
-    const variantId = idByTitle.get(combination.title)
+    const variantId = idByOptions.get(optionsKey(combination.options))
 
     if (!variantId) {
       unmatched.push(combination.title)

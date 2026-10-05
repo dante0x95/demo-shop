@@ -658,17 +658,28 @@ describe("buildCreateProductFullPayload", () => {
   })
 })
 
+// A created variant as the API returns it: identified by its option values.
+const createdVariant = (id: string, options: Record<string, string>) => ({
+  id,
+  options: Object.entries(options).map(([title, value]) => ({
+    value,
+    option: { title },
+  })),
+})
+
+const DEFAULT_CREATED = createdVariant("variant_1", {
+  [DEFAULT_OPTION_TITLE]: DEFAULT_OPTION_VALUE,
+})
+
 describe("buildFollowUpRequests", () => {
   const created = [
-    { id: "variant_s", title: "S" },
-    { id: "variant_m", title: "M" },
+    createdVariant("variant_s", { Size: "S" }),
+    createdVariant("variant_m", { Size: "M" }),
   ]
   const sizes = [option("1", "Size", "S, M")]
 
   it("has nothing to save when only core fields were set", () => {
-    const requests = buildFollowUpRequests(form(), ctx(), [
-      { id: "variant_1", title: DEFAULT_VARIANT_TITLE },
-    ])
+    const requests = buildFollowUpRequests(form(), ctx(), [DEFAULT_CREATED])
 
     expect(requests).toEqual({
       pricing: null,
@@ -680,7 +691,7 @@ describe("buildFollowUpRequests", () => {
     expect(followUpParts(requests)).toEqual([])
   })
 
-  it("sends compare-at and cost to the created variants, matched by title", () => {
+  it("sends compare-at and cost to the created variants, matched by option values", () => {
     const requests = buildFollowUpRequests(
       form({
         options: sizes,
@@ -704,6 +715,58 @@ describe("buildFollowUpRequests", () => {
       { variant_id: "variant_m", cost_amount: 12.5 },
     ])
     expect(requests.unmatched_variants).toEqual([])
+  })
+
+  it("tells apart combinations whose titles are the same", () => {
+    // Both combinations are titled "A / B / C".
+    const options = [
+      option("1", "Style", "A / B, A"),
+      option("2", "Size", "C, B / C"),
+    ]
+    const first = keyOf(options, "A / B / C")
+    const requests = buildFollowUpRequests(
+      form({ options, variants: { [first]: row({ cost_amount: "10" }) } }),
+      ctx(),
+      [
+        createdVariant("variant_ab_c", { Style: "A / B", Size: "C" }),
+        createdVariant("variant_ab_bc", { Style: "A / B", Size: "B / C" }),
+        createdVariant("variant_a_c", { Style: "A", Size: "C" }),
+        createdVariant("variant_a_bc", { Style: "A", Size: "B / C" }),
+      ]
+    )
+
+    expect(requests.pricing).toEqual([
+      { variant_id: "variant_ab_c", cost_amount: 10 },
+    ])
+  })
+
+  it("matches option values whatever order the API lists them in", () => {
+    const options = [option("1", "Size", "S"), option("2", "Color", "Red")]
+    const requests = buildFollowUpRequests(
+      form({
+        options,
+        variants: { [keyOf(options, "S / Red")]: row({ cost_amount: "3" }) },
+      }),
+      ctx(),
+      [createdVariant("variant_1", { Color: "Red", Size: "S" })]
+    )
+
+    expect(requests.pricing).toEqual([
+      { variant_id: "variant_1", cost_amount: 3 },
+    ])
+  })
+
+  it("reports a variant the API returned without its options", () => {
+    const requests = buildFollowUpRequests(
+      form({
+        variants: { [DEFAULT_VARIANT_KEY]: row({ cost_amount: "3" }) },
+      }),
+      ctx(),
+      [{ id: "variant_1", options: null }]
+    )
+
+    expect(requests.pricing).toEqual([])
+    expect(requests.unmatched_variants).toEqual([DEFAULT_VARIANT_TITLE])
   })
 
   it("skips variants with neither compare-at nor cost", () => {
@@ -734,7 +797,7 @@ describe("buildFollowUpRequests", () => {
         },
       }),
       ctx(),
-      [{ id: "variant_s", title: "S" }]
+      [created[0]]
     )
 
     expect(requests.pricing).toEqual([
@@ -750,7 +813,7 @@ describe("buildFollowUpRequests", () => {
         variants: { [DEFAULT_VARIANT_KEY]: row({ compare_at_amount: "30" }) },
       }),
       ctx(),
-      [{ id: "variant_1", title: DEFAULT_VARIANT_TITLE }]
+      [DEFAULT_CREATED]
     )
 
     expect(requests.pricing).toEqual([
@@ -861,7 +924,7 @@ describe("buildFollowUpRequests", () => {
           { key: "care", label: "Care", type: "text", options: null },
         ],
       }),
-      [{ id: "variant_1", title: DEFAULT_VARIANT_TITLE }]
+      [DEFAULT_CREATED]
     )
 
     expect(followUpParts(requests)).toEqual([

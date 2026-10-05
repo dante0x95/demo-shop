@@ -47,7 +47,13 @@ export type AdminCreateProductFullPayload = {
 export type AdminCreatedProductFull = {
   id: string
   title: string
-  variants: { id: string; title: string }[] | null
+  variants:
+    | {
+        id: string
+        title: string
+        options: { value: string; option: { title: string } | null }[] | null
+      }[]
+    | null
 }
 
 export const createProductFull = (body: AdminCreateProductFullPayload) =>
@@ -56,8 +62,12 @@ export const createProductFull = (body: AdminCreateProductFullPayload) =>
     {
       method: "POST",
       body,
-      // Only what the page needs to save the other parts.
-      query: { fields: "id,title,variants.id,variants.title" },
+      // What the page needs to save the other parts; option values identify
+      // each variant.
+      query: {
+        fields:
+          "id,title,variants.id,variants.title,variants.options.value,variants.options.option.title",
+      },
     }
   )
 
