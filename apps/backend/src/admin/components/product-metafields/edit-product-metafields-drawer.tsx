@@ -1,109 +1,23 @@
-import {
-  Badge,
-  Button,
-  Drawer,
-  Input,
-  Label,
-  Select,
-  Text,
-  Textarea,
-  toast,
-} from "@medusajs/ui"
+import { Badge, Button, Drawer, Label, Text, toast } from "@medusajs/ui"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { FormEvent, useEffect, useState } from "react"
 import {
   buildProductMetafieldChanges,
-  fromSelectItemValue,
   METAFIELD_TYPE_LABELS,
   ProductMetafieldField,
   toMetafieldInputValue,
-  toSelectItemValue,
 } from "../../lib/metafield-form"
 import {
   deleteProductMetafield,
   metafieldQueryKeys,
   setProductMetafields,
 } from "../../lib/metafields"
+import { MetafieldInput } from "./metafield-input"
 
 const toInputs = (fields: ProductMetafieldField[]) =>
   Object.fromEntries(
     fields.map((field) => [field.key, toMetafieldInputValue(field.value)])
   )
-
-const FieldInput = ({
-  field,
-  id,
-  value,
-  onChange,
-  disabled,
-}: {
-  field: ProductMetafieldField
-  id: string
-  value: string
-  onChange: (value: string) => void
-  disabled: boolean
-}) => {
-  if (field.type === "boolean" || (field.type === "select" && field.options)) {
-    const options =
-      field.type === "boolean"
-        ? [
-            { value: "true", label: "True" },
-            { value: "false", label: "False" },
-          ]
-        : (field.options ?? []).map((option) => ({
-            value: option,
-            label: option,
-          }))
-
-    return (
-      <Select
-        value={toSelectItemValue(value)}
-        onValueChange={(next) => onChange(fromSelectItemValue(next))}
-        disabled={disabled}
-      >
-        <Select.Trigger id={id}>
-          <Select.Value />
-        </Select.Trigger>
-        <Select.Content>
-          <Select.Item value={toSelectItemValue("")}>No value</Select.Item>
-          {options.map((option) => (
-            <Select.Item
-              key={option.value}
-              value={toSelectItemValue(option.value)}
-            >
-              {option.label}
-            </Select.Item>
-          ))}
-        </Select.Content>
-      </Select>
-    )
-  }
-
-  if (field.type === "number") {
-    return (
-      <Input
-        id={id}
-        type="number"
-        inputMode="decimal"
-        step="any"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-      />
-    )
-  }
-
-  // Text, and a select without its definition (checked as plain text).
-  return (
-    <Textarea
-      id={id}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      rows={field.type === "text" ? 3 : 1}
-    />
-  )
-}
 
 type EditProductMetafieldsDrawerProps = {
   productId: string
@@ -228,7 +142,7 @@ export const EditProductMetafieldsDrawer = ({
                       </Badge>
                     )}
                   </div>
-                  <FieldInput
+                  <MetafieldInput
                     field={field}
                     id={id}
                     value={inputs[field.key] ?? ""}
