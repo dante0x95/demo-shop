@@ -62,6 +62,20 @@ Etiquetas: **libre** = todas sus dependencias ya están en `main` ·
 - [x] Producto: widgets de compare-at, costo, SEO y paquete · T29
 - [ ] Página "Agregar producto" estilo Shopify · T30 · libre
 
+## Paridad con Shopify: página "Agregar producto" (ronda 2)
+- [ ] Descripción con texto enriquecido · T31 · tras T30
+- [ ] Variantes: valores como chips, omitir combinaciones, edición masiva · T32 · tras T30
+- [ ] Imagen por variante · T33 · tras T30
+- [ ] Seguir vendiendo sin stock (backorder) · T34 · tras T30
+- [ ] Ganancia y margen junto al costo por artículo · T35 · tras T30
+- [ ] Orden de medios y texto alternativo · T36 · tras T30, T19
+- [ ] Videos y videos externos en los medios · T37 · tras T36
+- [ ] Interruptor "producto físico" · T38 · tras T30
+- [ ] Unidades de peso y tamaño · T39 · tras T30
+- [ ] Aviso de cambios sin guardar · T40 · tras T30
+- Por decidir (sin tarea): impuesto por producto, varias colecciones por producto, estado
+  "no listado", selector de plantilla del tema
+
 ## Endpoints Driver (protegidos con authenticate("driver"))
 - [x] POST /drivers (registro, junto con /auth/driver/emailpass/register)
 - [x] GET /drivers/me · T13

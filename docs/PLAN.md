@@ -24,8 +24,9 @@ Files several tasks touch (see the rules file for how to resolve a conflict):
 | `apps/backend/medusa-config.ts` | T10 (module registration), T14.1 (notification provider), T19 |
 | `apps/backend/src/api/middlewares.ts` | T08, T10, T14, T14.1, T15, T19 |
 | `src/api/drivers/middlewares.ts` | T13, T16, T17, T18 (a chain, never in parallel), T14.1 (one public entry, sorted position) |
-| `apps/backend/src/admin/lib/` (SDK, shared hooks) | T24-T30 |
-| `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19, T26.1 |
+| `apps/backend/src/admin/lib/` (SDK, shared hooks) | T24-T40 |
+| `apps/backend/src/admin/routes/products/add/` | T30-T40 (one at a time where they touch the same section) |
+| `apps/backend/src/modules/media/`, `src/api/admin/media/` | T07, T19, T26.1, T36, T37 |
 | `apps/backend/src/modules/brand/`, `src/workflows/brand/` | T08 (brand hook), T19 |
 
 ## Phase 1 — Brand (calibration)
@@ -398,3 +399,87 @@ Deps: T04, T07, T08, T09, T10, T20, T23, T26, T27, T28 (T08 decides which brand/
 - Decided: one plugin per module (brand, media, metafield, package-preset).
 - Decided: published privately to GitHub Packages.
 - Tests: all existing HTTP suites pass unchanged against the plugin-backed app.
+
+## Phase 9 — "Add product" parity (Shopify, round 2)
+
+Gaps left after T30 between our "Add product" page and Shopify's. All of them change
+`src/admin/routes/products/add/`, so check "Parallel work" before running two at once. They are
+admin UI tasks: same rules as Phase 7 (`building-admin-dashboard-customizations` skill,
+`npm run test:e2e`, never two e2e runs at once). Where a field can also be edited after
+creation, the task covers the product page too, not only "Add product".
+Parked until Dante decides they are needed (no task yet): "Charge tax" per product (Medusa
+taxes by region and tax rate), several collections per product (Medusa allows one), an
+"Unlisted" status, and a theme template picker (needs storefront templates).
+
+### [ ] T31 · Rich-text product description
+Deps: T30
+- Formatting editor for the description (bold, italic, headings, lists, links), like Shopify's,
+  on "Add product" and on the product page.
+- ❓ Editor library: a new dependency, so Dante approves it first.
+- ❓ Stored format (HTML or Markdown) and where it is sanitized (API on save, storefront on
+  render, or both). Existing plain-text descriptions must keep rendering.
+- ❓ Images and video embedded in the description, and an HTML source view: now or later.
+
+### [ ] T32 · Variant builder: option chips, skipped combinations, bulk edit
+Deps: T30
+- Option values as chips (add, remove, reorder) instead of comma-separated text.
+- Remove a combination the shop doesn't sell (e.g. "XL / Red") so it isn't created, and bring
+  it back.
+- Bulk edit: set price, compare-at, cost or stock for several variants at once, grouped by an
+  option (e.g. all "Red").
+- ❓ Limits on options and variants (Shopify: 3 options, 2048 variants).
+
+### [ ] T33 · Image per variant
+Deps: T30
+- Pick, from the product's media, the image each variant shows (each color its own photo).
+  Medusa 2.21 has variant images (`product_variant_product_image`).
+- ❓ One image per variant (Shopify) or several.
+- ❓ Whether `POST /admin/products/full` takes them in the same call or the page sets them right
+  after, as with T20-T23.
+
+### [ ] T34 · Continue selling when out of stock
+Deps: T30
+- Per-variant "Continue selling when out of stock" checkbox (`allow_backorder`), shown when
+  quantity is tracked. `POST /admin/products/full` already accepts the field.
+- ❓ Default off (Shopify) and whether the storefront shows a "backorder" notice.
+
+### [ ] T35 · Profit and margin next to cost per item
+Deps: T30
+- Shows profit (price − cost) and margin (profit ÷ price) live under the pricing fields, on
+  "Add product" and in T29's variant pricing drawer. Admin-only, nothing stored.
+- ❓ Rounding, and what to show with no cost, a zero price or a negative profit.
+
+### [ ] T36 · Media order and alt text
+Deps: T30, T19 (T19 moves the media module)
+- Drag media to reorder them on "Add product"; the order becomes the product's image order.
+- Edit an image's alt text from the page. Today alt text can only come from the library and
+  there is no endpoint to change it: add `POST /admin/media/:id` (media is Reusable).
+- ❓ Whether the alt text belongs to the library asset (shared by every product using it) or to
+  this product's image only.
+
+### [ ] T37 · Video and external video media
+Deps: T36
+- Add videos (upload or YouTube/Vimeo link) to a product's media, like Shopify. 3D models
+  stay out.
+- ❓ How the storefront gets them: Medusa product images are image URLs only, so videos need
+  their own storage (link to media assets, or a metafield).
+- ❓ Allowed video types and size limit (media module options, no hardcoded list).
+
+### [ ] T38 · Physical product toggle
+Deps: T30
+- "This is a physical product" checkbox, on by default. Off hides the shipping section and saves
+  the variants' inventory items with `requires_shipping: false`.
+- ❓ Whether checkout and the delivery flow (drivers, T15-T18) must skip non-physical items, or
+  this only changes the form for now.
+
+### [ ] T39 · Weight and size units
+Deps: T30
+- Unit pickers next to weight (kg, g, lb, oz) and size (cm, in). Medusa stores plain numbers.
+- ❓ One store-wide unit (stored once, values in that unit) or a unit per product converted to a
+  fixed base (e.g. grams, centimeters). Package presets (T10) must use the same units.
+
+### [ ] T40 · Unsaved-changes warning
+Deps: T30
+- Leaving "Add product" with edits, through Cancel, a sidebar link or closing the tab, asks
+  before discarding them. Nothing asks after a successful save.
+- ❓ Same guard on the product page widgets' drawers, or only on "Add product".
